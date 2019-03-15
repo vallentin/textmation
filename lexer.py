@@ -31,8 +31,11 @@ class Token:
 		self.span = span
 
 	def __str__(self):
-		begin, end = self.span
-		return "<%s: %s, %r (%d:%d, %d:%d)>" % (self.__class__.__name__, self.type.name, self.value, *begin, *end)
+		if self.span is not None:
+			begin, end = self.span
+			return "<%s: %s, %r (%d:%d, %d:%d)>" % (self.__class__.__name__, self.type.name, self.value, *begin, *end)
+		else:
+			return "<%s: %s, %r>" % (self.__class__.__name__, self.type.name, self.value)
 
 
 class LexerError(Exception):
