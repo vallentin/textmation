@@ -47,10 +47,12 @@ class LexerState:
 		self.lexer = lexer
 		self.ptr = lexer.ptr
 		self.line, self.character = lexer.line, lexer.character
+		self.indents = lexer.indents[:]
 
 	def _apply(self):
 		self.lexer.ptr = self.ptr
 		self.lexer.line, self.lexer.character = self.line, self.character
+		self.lexer.indents = self.indents
 
 
 class LexerPeeking:
@@ -75,8 +77,7 @@ class Lexer:
 		self.length = len(string)
 		self.ptr = 0
 		self.line, self.character = 1, 0
-		self.indentations = []
-		self.indentations.append("")
+		self.indents = [""]
 
 	def _fail(self, message, span):
 		begin, end = span
@@ -101,9 +102,9 @@ class Lexer:
 		if self.ptr >= self.length:
 			span_end = self.line, self.character
 
-			if len(self.indentations) > 1:
-				self.indentations.pop()
-				return Token(TokenType.Dedent, self.indentations[-1], (span_end, span_end))
+			if len(self.indents) > 1:
+				self.indents.pop()
+				return Token(TokenType.Dedent, self.indents[-1], (span_end, span_end))
 
 			return Token(TokenType.EndOfStream, "", (span_end, span_end))
 
@@ -130,10 +131,10 @@ class Lexer:
 					return Token(TokenType.Newline, self.string[begin:self.ptr], (span_begin, span_end))
 
 			if c not in _horizontal_whitespace:
-				if len(self.indentations) > 1:
-					self.indentations.pop()
+				if len(self.indents) > 1:
+					self.indents.pop()
 					span_end = self.line, self.character
-					return Token(TokenType.Dedent, self.indentations[-1], (span_end, span_end))
+					return Token(TokenType.Dedent, self.indents[-1], (span_end, span_end))
 			else:
 				span_begin = self.line, self.character
 				begin = self.ptr
@@ -144,16 +145,16 @@ class Lexer:
 				span_end = self.line, self.character
 
 				if self.string[self.ptr] != "#":
-					old_indent = self.indentations[-1]
+					old_indent = self.indents[-1]
 					new_indent = self.string[begin:self.ptr]
 
 					for i, (old, new) in enumerate(zip_longest(old_indent, new_indent)):
 						if old is None:
-							self.indentations.append(new_indent)
+							self.indents.append(new_indent)
 							return Token(TokenType.Indent, new_indent, (span_begin, span_end))
 
 						if new is None:
-							self.indentations.pop()
+							self.indents.pop()
 							return Token(TokenType.Dedent, new_indent, (span_begin, span_end))
 
 						if old != new:
