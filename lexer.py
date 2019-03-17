@@ -112,18 +112,23 @@ class Lexer:
 
 		if self.character == 1:
 			with self.peeking() as p:
-				span_begin = self.line, self.character
-				begin = self.ptr
-
 				empty_line = False
 
-				while True:
+				while self.ptr < self.length:
+					span_begin = self.line, self.character
+					begin = self.ptr
 					c2 = self._next()
 					if not c2.isspace():
 						break
-					if c2 == "\n":
+					elif c2 == "\n":
 						empty_line = True
 						break
+					elif c2 == "\r" and self._next() == "\n":
+						empty_line = True
+						break
+				else:
+					p.save()
+					return self.next()
 
 				if empty_line:
 					p.save()
