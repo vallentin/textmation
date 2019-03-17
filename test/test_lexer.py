@@ -48,39 +48,64 @@ class LexerTest(TestCase):
 		string = ""
 		with self.subTest(string=string):
 			lexer = Lexer(string)
-			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, 0), (1, 0)))
-			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, 0), (1, 0)))
-			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, 0), (1, 0)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, 1), (1, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, 1), (1, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, 1), (1, 1)))
 
 		string = "  "
 		with self.subTest(string=string):
 			lexer = Lexer(string)
-			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, 0), (1, 0)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, 3), (1, 3)))
 
 		string = "\n"
 		with self.subTest(string=string):
 			lexer = Lexer(string)
-			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 0), (2, 0)))
-			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((2, 0), (2, 0)))
+			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 1), (2, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((2, 1), (2, 1)))
+
+		string = "\r\n"
+		with self.subTest(string=string):
+			lexer = Lexer(string)
+			self.assertToken(lexer.next(), TokenType.Newline, "\r\n", ((1, 1), (2, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((2, 1), (2, 1)))
 
 		string = "  \t\n"
 		with self.subTest(string=string):
 			lexer = Lexer(string)
-			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 3), (2, 0)))
-			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((2, 0), (2, 0)))
+			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 4), (2, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((2, 1), (2, 1)))
+
+		string = "  \t\r\n"
+		with self.subTest(string=string):
+			lexer = Lexer(string)
+			self.assertToken(lexer.next(), TokenType.Newline, "\r\n", ((1, 4), (2, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((2, 1), (2, 1)))
 
 		string = "\n\t  "
 		with self.subTest(string=string):
 			lexer = Lexer(string)
-			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 0), (2, 0)))
-			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((2, 0), (2, 0)))
+			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 1), (2, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((2, 4), (2, 4)))
+
+		string = "\r\n\t  "
+		with self.subTest(string=string):
+			lexer = Lexer(string)
+			self.assertToken(lexer.next(), TokenType.Newline, "\r\n", ((1, 1), (2, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((2, 4), (2, 4)))
 
 		string = "\n\n"
 		with self.subTest(string=string):
 			lexer = Lexer(string)
-			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 0), (2, 0)))
-			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((2, 0), (3, 0)))
-			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((3, 0), (3, 0)))
+			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 1), (2, 1)))
+			self.assertToken(lexer.next(), TokenType.Newline, "\n", ((2, 1), (3, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((3, 1), (3, 1)))
+
+		string = "\r\n\r\n"
+		with self.subTest(string=string):
+			lexer = Lexer(string)
+			self.assertToken(lexer.next(), TokenType.Newline, "\r\n", ((1, 1), (2, 1)))
+			self.assertToken(lexer.next(), TokenType.Newline, "\r\n", ((2, 1), (3, 1)))
+			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((3, 1), (3, 1)))
 
 	def test_indentation(self):
 		string = dedent("""\
@@ -96,39 +121,39 @@ class LexerTest(TestCase):
 		""")
 
 		lexer = Lexer(string)
-		self.assertToken(lexer.next(), TokenType.Identifier, "A", ((1, 0), (1, 1)))
-		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 1), (2, 0)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "A", ((1, 1), (1, 2)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 2), (2, 1)))
 
-		self.assertToken(lexer.next(), TokenType.Indent, "\t", ((2, 0), (2, 1)))
-		self.assertToken(lexer.next(), TokenType.Identifier, "B", ((2, 1), (2, 2)))
-		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((2, 2), (3, 0)))
+		self.assertToken(lexer.next(), TokenType.Indent, "\t", ((2, 1), (2, 2)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "B", ((2, 2), (2, 3)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((2, 3), (3, 1)))
 
-		self.assertToken(lexer.next(), TokenType.Indent, "\t\t", ((3, 0), (3, 2)))
-		self.assertToken(lexer.next(), TokenType.Identifier, "C", ((3, 2), (3, 3)))
-		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((3, 3), (4, 0)))
-		self.assertToken(lexer.next(), TokenType.Dedent, "\t", ((4, 0), (4, 1)))
+		self.assertToken(lexer.next(), TokenType.Indent, "\t\t", ((3, 1), (3, 3)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "C", ((3, 3), (3, 4)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((3, 4), (4, 1)))
+		self.assertToken(lexer.next(), TokenType.Dedent, "\t", ((4, 1), (4, 2)))
 
-		self.assertToken(lexer.next(), TokenType.Identifier, "D", ((4, 1), (4, 2)))
-		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((4, 2), (5, 0)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "D", ((4, 2), (4, 3)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((4, 3), (5, 1)))
 
-		self.assertToken(lexer.next(), TokenType.Indent, "\t\t", ((5, 0), (5, 2)))
-		self.assertToken(lexer.next(), TokenType.Identifier, "E", ((5, 2), (5, 3)))
-		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((5, 3), (6, 0)))
-		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((6, 0), (7, 0)))
-		self.assertToken(lexer.next(), TokenType.Dedent, "\t", ((7, 0), (7, 0)))
-		self.assertToken(lexer.next(), TokenType.Dedent, "", ((7, 0), (7, 0)))
+		self.assertToken(lexer.next(), TokenType.Indent, "\t\t", ((5, 1), (5, 3)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "E", ((5, 3), (5, 4)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((5, 4), (6, 1)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((6, 1), (7, 1)))
+		self.assertToken(lexer.next(), TokenType.Dedent, "\t", ((7, 1), (7, 1)))
+		self.assertToken(lexer.next(), TokenType.Dedent, "", ((7, 1), (7, 1)))
 
-		self.assertToken(lexer.next(), TokenType.Identifier, "F", ((7, 0), (7, 1)))
-		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((7, 1), (8, 0)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "F", ((7, 1), (7, 2)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((7, 2), (8, 1)))
 
-		self.assertToken(lexer.next(), TokenType.Indent, "\t", ((8, 0), (8, 1)))
-		self.assertToken(lexer.next(), TokenType.Identifier, "G", ((8, 1), (8, 2)))
-		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((8, 2), (9, 0)))
+		self.assertToken(lexer.next(), TokenType.Indent, "\t", ((8, 1), (8, 2)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "G", ((8, 2), (8, 3)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((8, 3), (9, 1)))
 
-		self.assertToken(lexer.next(), TokenType.Identifier, "H", ((9, 1), (9, 2)))
-		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((9, 2), (10, 0)))
-		self.assertToken(lexer.next(), TokenType.Dedent, "", ((10, 0), (10, 0)))
-		self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((10, 0), (10, 0)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "H", ((9, 2), (9, 3)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((9, 3), (10, 1)))
+		self.assertToken(lexer.next(), TokenType.Dedent, "", ((10, 1), (10, 1)))
+		self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((10, 1), (10, 1)))
 
 	def test_indentation_inconsistent_invalid(self):
 		strings = [
@@ -190,8 +215,8 @@ class LexerTest(TestCase):
 		for identifier in identifiers:
 			with self.subTest(identifier=identifier):
 				lexer = Lexer(identifier)
-				self.assertToken(lexer.next(), TokenType.Identifier, identifier, ((1, 0), (1, len(identifier))))
-				self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, len(identifier)), (1, len(identifier))))
+				self.assertToken(lexer.next(), TokenType.Identifier, identifier, ((1, 1), (1, len(identifier) + 1)))
+				self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, len(identifier) + 1), (1, len(identifier) + 1)))
 
 	def test_string(self):
 		strings = [
@@ -209,8 +234,8 @@ class LexerTest(TestCase):
 		for string in strings:
 			with self.subTest(string=string):
 				lexer = Lexer(string)
-				self.assertToken(lexer.next(), TokenType.String, string, ((1, 0), (1, len(string))))
-				self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, len(string)), (1, len(string))))
+				self.assertToken(lexer.next(), TokenType.String, string, ((1, 1), (1, len(string) + 1)))
+				self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, len(string) + 1), (1, len(string) + 1)))
 
 	def test_string_unterminated_eos(self):
 		strings = [
