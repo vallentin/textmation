@@ -76,7 +76,7 @@ class Lexer:
 		self.string = string
 		self.length = len(string)
 		self.ptr = 0
-		self.line, self.character = 1, 0
+		self.line, self.character = 1, 1
 		self.indents = [""]
 
 	def _fail(self, message, span):
@@ -92,7 +92,7 @@ class Lexer:
 
 		if c == "\n":
 			self.line += 1
-			self.character = 0
+			self.character = 1
 		else:
 			self.character += 1
 
@@ -110,7 +110,7 @@ class Lexer:
 
 		c = self.string[self.ptr]
 
-		if self.character == 0:
+		if self.character == 1:
 			with self.peeking() as p:
 				span_begin = self.line, self.character
 				begin = self.ptr
