@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from itertools import zip_longest
 from textwrap import dedent
 from unittest import TestCase
 
@@ -218,6 +219,17 @@ class LexerTest(TestCase):
 				self.assertToken(lexer.next(), TokenType.Identifier, identifier, ((1, 1), (1, len(identifier) + 1)))
 				self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((1, len(identifier) + 1), (1, len(identifier) + 1)))
 
+	def test_integer(self):
+		lexer = Lexer("1 2 34 -56 789")
+
+		self.assertToken(lexer.next(), TokenType.Integer, "1")
+		self.assertToken(lexer.next(), TokenType.Integer, "2")
+		self.assertToken(lexer.next(), TokenType.Integer, "34")
+		self.assertToken(lexer.next(), TokenType.Symbol, "-")
+		self.assertToken(lexer.next(), TokenType.Integer, "56")
+		self.assertToken(lexer.next(), TokenType.Integer, "789")
+		self.assertToken(lexer.next(), TokenType.EndOfStream)
+
 	def test_string(self):
 		strings = [
 			'"Hello World"',
@@ -270,3 +282,154 @@ class LexerTest(TestCase):
 				lexer = Lexer(string)
 				with self.assertRaisesRegex(LexerError, r"^Unexpected end of line while scanning string literal \(\d+:\d+, \d+:\d+\)$"):
 					lexer.next()
+
+	def test_symbol(self):
+		symbols = "((+-*/))"
+		lexer = Lexer(symbols)
+
+		for expected in symbols:
+			with self.subTest(expected=expected):
+				self.assertToken(lexer.next(), TokenType.Symbol, expected)
+
+		self.assertToken(lexer.next(), TokenType.EndOfStream)
+
+	def test_peek(self):
+		symbols = "((+-*/))"
+		lexer = Lexer(symbols)
+
+		for i in range(len(symbols)):
+			next_expected = symbols[i]
+			with self.subTest(next_token=next_expected):
+				for j in range(len(symbols) - i):
+					expected = symbols[i + j]
+					with self.subTest(peek_token=expected):
+						self.assertToken(lexer.peek(j), TokenType.Symbol, expected)
+				self.assertToken(lexer.next(), TokenType.Symbol, next_expected)
+
+	def test_peeking(self):
+		symbols = "+-*/"
+		lexer = Lexer(symbols)
+
+		for i in range(len(symbols)):
+			next_expected = symbols[i]
+			with self.subTest(next_token=next_expected):
+				with lexer.peeking():
+					for j in range(len(symbols) - i):
+						expected = symbols[i + j]
+						with self.subTest(peek_token=expected):
+							self.assertToken(lexer.next(), TokenType.Symbol, expected)
+				self.assertToken(lexer.next(), TokenType.Symbol, next_expected)
+
+	def test_nested_peeking(self):
+		lexer = Lexer("1 2 3")
+
+		self.assertToken(lexer.next(), TokenType.Integer, "1")
+
+		with lexer.peeking():
+			self.assertToken(lexer.next(), TokenType.Integer, "2")
+
+			with lexer.peeking():
+				self.assertToken(lexer.next(), TokenType.Integer, "3")
+				self.assertToken(lexer.next(), TokenType.EndOfStream)
+
+			self.assertToken(lexer.next(), TokenType.Integer, "3")
+			self.assertToken(lexer.next(), TokenType.EndOfStream)
+
+		self.assertToken(lexer.next(), TokenType.Integer, "2")
+		self.assertToken(lexer.next(), TokenType.Integer, "3")
+		self.assertToken(lexer.next(), TokenType.EndOfStream)
+
+	def test_peeking_save(self):
+		lexer = Lexer("1 2 3 4 5")
+
+		self.assertToken(lexer.next(), TokenType.Integer, "1")
+
+		with lexer.peeking() as p:
+			self.assertToken(lexer.next(), TokenType.Integer, "2")
+			self.assertToken(lexer.next(), TokenType.Integer, "3")
+
+			p.save()
+
+			self.assertToken(lexer.next(), TokenType.Integer, "4")
+
+		self.assertToken(lexer.next(), TokenType.Integer, "4")
+		self.assertToken(lexer.next(), TokenType.Integer, "5")
+		self.assertToken(lexer.next(), TokenType.EndOfStream)
+
+	def test_nested_peeking_save(self):
+		lexer = Lexer("1 2 3 4 5")
+
+		self.assertToken(lexer.next(), TokenType.Integer, "1")
+
+		with lexer.peeking():
+			self.assertToken(lexer.next(), TokenType.Integer, "2")
+
+			with lexer.peeking() as p:
+				self.assertToken(lexer.next(), TokenType.Integer, "3")
+
+				p.save()
+
+				self.assertToken(lexer.next(), TokenType.Integer, "4")
+
+			self.assertToken(lexer.next(), TokenType.Integer, "4")
+			self.assertToken(lexer.next(), TokenType.Integer, "5")
+			self.assertToken(lexer.next(), TokenType.EndOfStream)
+
+		self.assertToken(lexer.next(), TokenType.Integer, "2")
+		self.assertToken(lexer.next(), TokenType.Integer, "3")
+		self.assertToken(lexer.next(), TokenType.Integer, "4")
+		self.assertToken(lexer.next(), TokenType.Integer, "5")
+		self.assertToken(lexer.next(), TokenType.EndOfStream)
+
+	def test_nested_peeking_save_multiple(self):
+		lexer = Lexer("1 2 3 4 5")
+
+		self.assertToken(lexer.next(), TokenType.Integer, "1")
+
+		with lexer.peeking() as p1:
+			self.assertToken(lexer.next(), TokenType.Integer, "2")
+
+			with lexer.peeking() as p2:
+				self.assertToken(lexer.next(), TokenType.Integer, "3")
+
+				p2.save()
+
+				self.assertToken(lexer.next(), TokenType.Integer, "4")
+
+			p1.save()
+
+			self.assertToken(lexer.next(), TokenType.Integer, "4")
+
+		self.assertToken(lexer.next(), TokenType.Integer, "4")
+		self.assertToken(lexer.next(), TokenType.Integer, "5")
+		self.assertToken(lexer.next(), TokenType.EndOfStream)
+
+	def test_iter(self):
+		symbols = "((+-*/))"
+		lexer = Lexer(symbols)
+
+		tokens = [Token(TokenType.Symbol, c, ((1, i), (1, i + 1))) for i, c in enumerate(symbols, start=1)]
+		tokens.append(Token(TokenType.EndOfStream, "", ((1, len(symbols) + 1), (1, len(symbols) + 1))))
+
+		for i, (actual, expected) in enumerate(zip_longest(lexer, tokens)):
+			with self.subTest(i=i, actual=actual, expected=expected):
+				self.assertToken(actual, expected)
+
+	def test_peeking_iter(self):
+		symbols = "+-*/"
+		lexer = Lexer(symbols)
+
+		tokens = [Token(TokenType.Symbol, c, ((1, i), (1, i + 1))) for i, c in enumerate(symbols, start=1)]
+		tokens.append(Token(TokenType.EndOfStream, "", ((1, len(symbols) + 1), (1, len(symbols) + 1))))
+
+		def test():
+			for i, (actual, expected) in enumerate(zip_longest(lexer, tokens)):
+				with self.subTest(i=i, actual=actual, expected=expected):
+					self.assertToken(actual, expected)
+
+		with self.subTest(iteration=1), lexer.peeking():
+			test()
+		with self.subTest(iteration=2), lexer.peeking():
+			test()
+		with self.subTest(iteration=3):
+			test()

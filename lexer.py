@@ -37,6 +37,12 @@ class Token:
 		else:
 			return "<%s: %s, %r>" % (self.__class__.__name__, self.type.name, self.value)
 
+	def __repr__(self):
+		if self.span is not None:
+			return "%s(%r, %r, %r)" % (self.__class__.__name__, self.type, self.value, self.span)
+		else:
+			return "%s(%r, %r)" % (self.__class__.__name__, self.type, self.value)
+
 
 class LexerError(Exception):
 	pass
