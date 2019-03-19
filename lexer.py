@@ -54,11 +54,13 @@ class LexerState:
 		self.ptr = lexer.ptr
 		self.line, self.character = lexer.line, lexer.character
 		self.indents = lexer.indents[:]
+		self.dedents = lexer.dedents
 
 	def _apply(self):
 		self.lexer.ptr = self.ptr
 		self.lexer.line, self.lexer.character = self.line, self.character
 		self.lexer.indents = self.indents
+		self.lexer.dedents = self.dedents
 
 
 class LexerPeeking:
@@ -84,6 +86,7 @@ class Lexer:
 		self.ptr = 0
 		self.line, self.character = 1, 1
 		self.indents = [""]
+		self.dedents = 0
 
 	def _fail(self, message, span):
 		begin, end = span
@@ -105,6 +108,14 @@ class Lexer:
 		return c
 
 	def next(self):
+		if self.dedents > 0:
+			span_end = self.line, self.character
+
+			self.indents.pop()
+			self.dedents -= 1
+
+			return Token(TokenType.Dedent, self.indents[-1], (span_end, span_end))
+
 		if self.ptr >= self.length:
 			span_end = self.line, self.character
 
@@ -159,14 +170,23 @@ class Lexer:
 					old_indent = self.indents[-1]
 					new_indent = self.string[begin:self.ptr]
 
-					for i, (old, new) in enumerate(zip_longest(old_indent, new_indent)):
+					for old, new in zip_longest(old_indent, new_indent):
 						if old is None:
 							self.indents.append(new_indent)
 							return Token(TokenType.Indent, new_indent, (span_begin, span_end))
 
 						if new is None:
+							for i in range(len(self.indents) - 1, 0, -1):
+								if self.indents[i] == new_indent:
+									break
+								self.dedents += 1
+							else:
+								self._fail("Dedent does not match any outer indentation level", (span_begin, span_end))
+
 							self.indents.pop()
-							return Token(TokenType.Dedent, new_indent, (span_begin, span_end))
+							self.dedents -= 1
+
+							return Token(TokenType.Dedent, self.indents[-1], (span_end, span_end))
 
 						if old != new:
 							self._fail("Inconsistent use of tabs and spaces in indentation", (span_begin, span_end))

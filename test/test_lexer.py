@@ -109,7 +109,7 @@ class LexerTest(TestCase):
 			self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((3, 1), (3, 1)))
 
 	def test_indentation(self):
-		string = dedent("""\
+		lexer = Lexer(dedent("""\
 		A
 			B
 				C
@@ -119,9 +119,8 @@ class LexerTest(TestCase):
 		F
 			G
 			H
-		""")
+		"""))
 
-		lexer = Lexer(string)
 		self.assertToken(lexer.next(), TokenType.Identifier, "A", ((1, 1), (1, 2)))
 		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 2), (2, 1)))
 
@@ -132,8 +131,8 @@ class LexerTest(TestCase):
 		self.assertToken(lexer.next(), TokenType.Indent, "\t\t", ((3, 1), (3, 3)))
 		self.assertToken(lexer.next(), TokenType.Identifier, "C", ((3, 3), (3, 4)))
 		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((3, 4), (4, 1)))
-		self.assertToken(lexer.next(), TokenType.Dedent, "\t", ((4, 1), (4, 2)))
 
+		self.assertToken(lexer.next(), TokenType.Dedent, "\t", ((4, 2), (4, 2)))
 		self.assertToken(lexer.next(), TokenType.Identifier, "D", ((4, 2), (4, 3)))
 		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((4, 3), (5, 1)))
 
@@ -141,9 +140,9 @@ class LexerTest(TestCase):
 		self.assertToken(lexer.next(), TokenType.Identifier, "E", ((5, 3), (5, 4)))
 		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((5, 4), (6, 1)))
 		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((6, 1), (7, 1)))
+
 		self.assertToken(lexer.next(), TokenType.Dedent, "\t", ((7, 1), (7, 1)))
 		self.assertToken(lexer.next(), TokenType.Dedent, "", ((7, 1), (7, 1)))
-
 		self.assertToken(lexer.next(), TokenType.Identifier, "F", ((7, 1), (7, 2)))
 		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((7, 2), (8, 1)))
 
@@ -153,8 +152,45 @@ class LexerTest(TestCase):
 
 		self.assertToken(lexer.next(), TokenType.Identifier, "H", ((9, 2), (9, 3)))
 		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((9, 3), (10, 1)))
+
 		self.assertToken(lexer.next(), TokenType.Dedent, "", ((10, 1), (10, 1)))
 		self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((10, 1), (10, 1)))
+
+	def test_indentation_dedent(self):
+		lexer = Lexer(dedent("""\
+		A
+			B
+				C
+					D
+			E
+		F
+		"""))
+
+		self.assertToken(lexer.next(), TokenType.Identifier, "A", ((1, 1), (1, 2)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((1, 2), (2, 1)))
+
+		self.assertToken(lexer.next(), TokenType.Indent, "\t", ((2, 1), (2, 2)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "B", ((2, 2), (2, 3)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((2, 3), (3, 1)))
+
+		self.assertToken(lexer.next(), TokenType.Indent, "\t\t", ((3, 1), (3, 3)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "C", ((3, 3), (3, 4)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((3, 4), (4, 1)))
+
+		self.assertToken(lexer.next(), TokenType.Indent, "\t\t\t", ((4, 1), (4, 4)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "D", ((4, 4), (4, 5)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((4, 5), (5, 1)))
+
+		self.assertToken(lexer.next(), TokenType.Dedent, "\t\t", ((5, 2), (5, 2)))
+		self.assertToken(lexer.next(), TokenType.Dedent, "\t", ((5, 2), (5, 2)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "E", ((5, 2), (5, 3)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((5, 3), (6, 1)))
+
+		self.assertToken(lexer.next(), TokenType.Dedent, "", ((6, 1), (6, 1)))
+		self.assertToken(lexer.next(), TokenType.Identifier, "F", ((6, 1), (6, 2)))
+		self.assertToken(lexer.next(), TokenType.Newline, "\n", ((6, 2), (7, 1)))
+
+		self.assertToken(lexer.next(), TokenType.EndOfStream, "", ((7, 1), (7, 1)))
 
 	def test_indentation_inconsistent_invalid(self):
 		strings = [
@@ -204,6 +240,28 @@ class LexerTest(TestCase):
 				lexer = Lexer(string)
 				for _ in lexer:
 					pass
+
+	def test_indentation_dedent_invalid(self):
+		strings = [
+			dedent("""\
+			A
+			  B
+			 C
+			"""),
+			dedent("""\
+			A
+			  B
+			    C
+			   D
+			"""),
+		]
+
+		for string in strings:
+			with self.subTest(string=string):
+				lexer = Lexer(string)
+				with self.assertRaisesRegex(LexerError, r"^Dedent does not match any outer indentation level \(\d+:\d+, \d+:\d+\)$"):
+					for _ in lexer:
+						pass
 
 	def test_identifier(self):
 		identifiers = [
