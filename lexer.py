@@ -55,12 +55,14 @@ class LexerState:
 		self.line, self.character = lexer.line, lexer.character
 		self.indents = lexer.indents[:]
 		self.dedents = lexer.dedents
+		self.brackets = lexer.brackets[:]
 
 	def _apply(self):
 		self.lexer.ptr = self.ptr
 		self.lexer.line, self.lexer.character = self.line, self.character
 		self.lexer.indents = self.indents
 		self.lexer.dedents = self.dedents
+		self.lexer.brackets = self.brackets
 
 
 class LexerPeeking:
@@ -87,10 +89,17 @@ class Lexer:
 		self.line, self.character = 1, 1
 		self.indents = [""]
 		self.dedents = 0
+		self.brackets = []
 
 	def _fail(self, message, span):
 		begin, end = span
 		raise LexerError("%s (%d:%d, %d:%d)" % (message, *begin, *end))
+
+	def _unexpected(self, unexpected, expected=None, span=None):
+		if expected is not None:
+			self._fail("Unexpected %r, expected %r" % (unexpected, expected), span)
+		else:
+			self._fail("Unexpected %r" % unexpected, span)
 
 	def _next(self):
 		if self.ptr >= self.length:
@@ -119,6 +128,9 @@ class Lexer:
 		if self.ptr >= self.length:
 			span_end = self.line, self.character
 
+			if len(self.brackets) > 0:
+				self._fail("Unexpected end, expected %r" % self.brackets[-1], (span_end, span_end))
+
 			if len(self.indents) > 1:
 				self.indents.pop()
 				return Token(TokenType.Dedent, self.indents[-1], (span_end, span_end))
@@ -127,7 +139,7 @@ class Lexer:
 
 		c = self.string[self.ptr]
 
-		if self.character == 1:
+		if self.character == 1 and len(self.brackets) == 0:
 			with self.peeking() as p:
 				empty_line = False
 
@@ -257,6 +269,15 @@ class Lexer:
 		span_begin = self.line, self.character
 		c = self._next()
 		span_end = self.line, self.character
+
+		if c in "([{":
+			self.brackets.append(")]}"["([{".index(c)])
+		elif c in ")]}":
+			if len(self.brackets) == 0:
+				self._unexpected(c, span=(span_begin, span_end))
+			if self.brackets[-1] != c:
+				self._unexpected(c, self.brackets[-1], (span_begin, span_end))
+			self.brackets.pop()
 
 		return Token(TokenType.Symbol, c, (span_begin, span_end))
 
