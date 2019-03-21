@@ -263,6 +263,96 @@ class LexerTest(TestCase):
 					for _ in lexer:
 						pass
 
+	def test_bracket(self):
+		lexer = Lexer(dedent("""\
+		A
+			B (
+				C
+				)
+		D
+		"""))
+
+		self.assertToken(lexer.next(), TokenType.Identifier, "A")
+		self.assertToken(lexer.next(), TokenType.Newline, "\n")
+
+		self.assertToken(lexer.next(), TokenType.Indent, "\t")
+		self.assertToken(lexer.next(), TokenType.Identifier, "B")
+		self.assertToken(lexer.next(), TokenType.Symbol, "(")
+		self.assertToken(lexer.next(), TokenType.Newline, "\n")
+
+		self.assertToken(lexer.next(), TokenType.Identifier, "C")
+		self.assertToken(lexer.next(), TokenType.Newline, "\n")
+
+		self.assertToken(lexer.next(), TokenType.Symbol, ")")
+		self.assertToken(lexer.next(), TokenType.Newline, "\n")
+
+		self.assertToken(lexer.next(), TokenType.Dedent, "")
+		self.assertToken(lexer.next(), TokenType.Identifier, "D")
+		self.assertToken(lexer.next(), TokenType.Newline, "\n")
+		self.assertToken(lexer.next(), TokenType.EndOfStream, "")
+
+	def test_brackets(self):
+		strings = [
+			"()",
+			"[]",
+			"{}",
+			"((()))",
+			"(())(())",
+			"([{}])[{()}]{([])}",
+		]
+
+		for string in strings:
+			with self.subTest(string=string):
+				lexer = Lexer(string)
+				for _ in lexer:
+					pass
+
+	def test_bracket_unexpected_close_bracket(self):
+		strings = [
+			"(]",
+			"(}",
+			"[)",
+			"[}",
+			"{)",
+			"{]",
+			"([()})",
+		]
+
+		for string in strings:
+			with self.subTest(string=string):
+				lexer = Lexer(string)
+				with self.assertRaisesRegex(LexerError, r"^Unexpected '[)\]}]', expected '[)\]}]' \(\d+:\d+, \d+:\d+\)$"):
+					for _ in lexer:
+						pass
+
+	def test_bracket_unexpected_bracket(self):
+		strings = [
+			")",
+			"]",
+			"}",
+		]
+
+		for string in strings:
+			with self.subTest(string=string):
+				lexer = Lexer(string)
+				with self.assertRaisesRegex(LexerError, r"^Unexpected '[)\]}]' \(\d+:\d+, \d+:\d+\)$"):
+					for _ in lexer:
+						pass
+
+	def test_bracket_unexpected_eos(self):
+		strings = [
+			"(()",
+			"[[]",
+			"{{}",
+		]
+
+		for string in strings:
+			with self.subTest(string=string):
+				lexer = Lexer(string)
+				with self.assertRaisesRegex(LexerError, r"^Unexpected end, expected '[)\]}]' \(\d+:\d+, \d+:\d+\)$"):
+					for _ in lexer:
+						pass
+
 	def test_identifier(self):
 		identifiers = [
 			"x",
