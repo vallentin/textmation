@@ -88,6 +88,17 @@ class PILRenderer(Renderer):
 		return PILFrame(size, background)
 
 
+def _save_gif(filename, frames, frame_rate):
+	frames = list(map(attrgetter("image"), frames))
+	frames[0].save(
+		filename,
+		append_images=frames[1:],
+		save_all=True,
+		duration=1000 / frame_rate,
+		loop=0,
+		optimize=False)
+
+
 if __name__ == "__main__":
 	scene = Scene((200, 200))
 
@@ -126,10 +137,11 @@ if __name__ == "__main__":
 	r1bl.add(a1bl)
 	r1br.add(a1br)
 
-	frame_rate = 10
+	frame_rate = 20
 	duration = ceil(max(map(attrgetter("end_time"), (a1tl, a1tr, a1bl, a1br))))
 
 	renderer = PILRenderer()
+	frames = []
 
 	os.makedirs("output", exist_ok=True)
 
@@ -144,3 +156,7 @@ if __name__ == "__main__":
 
 		frame = renderer.render(scene)
 		frame.save(filename)
+
+		frames.append(frame)
+
+	_save_gif("output.gif", frames, frame_rate)
