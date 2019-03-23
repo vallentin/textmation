@@ -1,9 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from operator import attrgetter
+from math import ceil
+import os
+
 from PIL import Image, ImageDraw
 
 from scene import *
+
+
+def iter_frame_time(duration, frame_rate, *, inclusive=False):
+	frames = duration * frame_rate
+	if inclusive:
+		frames += 1
+
+	for frame in range(frames):
+		time = frame / frame_rate
+		yield frame, time
 
 
 class Frame:
@@ -66,7 +80,7 @@ class PILFrame(Frame):
 	def draw_rect(self, bounds, color):
 		x, y = bounds[:2]
 		x2, y2 = map(sum, zip(bounds, bounds[2:]))
-		self.draw.rectangle((x, y, x2, y2), fill=color)
+		self.draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
 
 
 class PILRenderer(Renderer):
@@ -84,6 +98,49 @@ if __name__ == "__main__":
 
 	scene.add_all((r1tl, r1tr, r1bl, r1br))
 
+	a1tl = Animation("color")
+	a1tl.add(Keyframe(0, (0, 0, 0)))
+	a1tl.add(Keyframe(1, (255, 0, 0)))
+	a1tl.add(Keyframe(2, (0, 0, 0)))
+
+	a1tr = Animation("color")
+	a1tr.delay = 0.5
+	a1tr.add(Keyframe(0, (0, 0, 0)))
+	a1tr.add(Keyframe(1, (0, 255, 0)))
+	a1tr.add(Keyframe(2, (0, 0, 0)))
+
+	a1bl = Animation("color")
+	a1bl.delay = 1.0
+	a1bl.add(Keyframe(0, (0, 0, 0)))
+	a1bl.add(Keyframe(1, (0, 0, 255)))
+	a1bl.add(Keyframe(2, (0, 0, 0)))
+
+	a1br = Animation("color")
+	a1br.delay = 1.5
+	a1br.add(Keyframe(0, (0, 0, 0)))
+	a1br.add(Keyframe(1, (255, 0, 255)))
+	a1br.add(Keyframe(2, (0, 0, 0)))
+
+	r1tl.add(a1tl)
+	r1tr.add(a1tr)
+	r1bl.add(a1bl)
+	r1br.add(a1br)
+
+	frame_rate = 10
+	duration = ceil(max(map(attrgetter("end_time"), (a1tl, a1tr, a1bl, a1br))))
+
 	renderer = PILRenderer()
-	frame = renderer.render(scene)
-	frame.save("test.png")
+
+	os.makedirs("output", exist_ok=True)
+
+	for frame, time in iter_frame_time(duration, frame_rate, inclusive=True):
+		filename = "output/frame_%04d.png" % frame
+		print("Rendering:", os.path.basename(filename))
+
+		r1tl.update_animations(time)
+		r1tr.update_animations(time)
+		r1bl.update_animations(time)
+		r1br.update_animations(time)
+
+		frame = renderer.render(scene)
+		frame.save(filename)
