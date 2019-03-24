@@ -1,12 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from itertools import tee
 from operator import attrgetter
 import os
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageChops
 
 from scene import *
+
+
+_point_table = (0,) + (255,) * 255
+
+
+def pairwise(iterable, *, n=2):
+	iterators = tee(iterable, n)
+	for i in range(n):
+		for _ in range(i):
+			next(iterators[i])
+	yield from zip(*iterators)
 
 
 def iter_frame_time(duration, frame_rate, *, inclusive=False):
@@ -88,7 +100,9 @@ class PILRenderer(Renderer):
 
 
 def _save_gif(filename, frames, frame_rate):
-	frames = list(map(attrgetter("image"), frames))
+	if isinstance(frames[0], PILFrame):
+		frames = list(map(attrgetter("image"), frames))
+	assert isinstance(frames[0], Image.Image)
 	frames[0].save(
 		filename,
 		append_images=frames[1:],
@@ -96,6 +110,20 @@ def _save_gif(filename, frames, frame_rate):
 		duration=1000 / frame_rate,
 		loop=0,
 		optimize=False)
+
+
+def _render_difference(a, b):
+	if isinstance(a, PILFrame):
+		a = a.image
+	if isinstance(b, PILFrame):
+		b = b.image
+
+	diff = ImageChops.difference(a, b)
+	diff = diff.convert("L")
+	diff = diff.point(_point_table)
+	diff = diff.convert("RGB")
+
+	return diff
 
 
 if __name__ == "__main__":
@@ -140,6 +168,7 @@ if __name__ == "__main__":
 	frames = []
 
 	os.makedirs("output", exist_ok=True)
+	os.makedirs("output/difference", exist_ok=True)
 
 	for frame, time in iter_frame_time(scene.duration, scene.frame_rate, inclusive=True):
 		filename = "output/frame_%04d.png" % frame
@@ -156,3 +185,13 @@ if __name__ == "__main__":
 		frames.append(frame)
 
 	_save_gif("output.gif", frames, scene.frame_rate)
+
+	frame_differences = []
+
+	for i, (frame_before, frame_after) in enumerate(pairwise(frames)):
+		diff = _render_difference(frame_before, frame_after)
+		diff.save("output/difference/frame_%04d_%04d.png" % (i, i + 1))
+
+		frame_differences.append(diff)
+
+	_save_gif("output_difference.gif", frame_differences, scene.frame_rate)
