@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from operator import attrgetter
-from math import ceil
 import os
 
 from PIL import Image, ImageDraw
@@ -137,15 +136,12 @@ if __name__ == "__main__":
 	r1bl.add(a1bl)
 	r1br.add(a1br)
 
-	frame_rate = 20
-	duration = ceil(max(map(attrgetter("end_time"), (a1tl, a1tr, a1bl, a1br))))
-
 	renderer = PILRenderer()
 	frames = []
 
 	os.makedirs("output", exist_ok=True)
 
-	for frame, time in iter_frame_time(duration, frame_rate, inclusive=True):
+	for frame, time in iter_frame_time(scene.duration, scene.frame_rate, inclusive=True):
 		filename = "output/frame_%04d.png" % frame
 		print("Rendering:", os.path.basename(filename))
 
@@ -159,4 +155,4 @@ if __name__ == "__main__":
 
 		frames.append(frame)
 
-	_save_gif("output.gif", frames, frame_rate)
+	_save_gif("output.gif", frames, scene.frame_rate)

@@ -3,7 +3,9 @@
 
 from itertools import islice, repeat, starmap
 from functools import total_ordering
+from operator import attrgetter
 import bisect
+from math import ceil
 
 
 class Element:
@@ -30,6 +32,15 @@ class Element:
 		for element in elements:
 			self.add(element)
 
+	def traverse(self):
+		yield self
+		for child in self.children:
+			yield from child.traverse()
+
+	def traverse_animations(self):
+		for element in self.traverse():
+			yield from element.animations
+
 	def update_animations(self, time):
 		for animation in self.animations:
 			value = animation.get_value(time)
@@ -41,6 +52,18 @@ class Scene(Element):
 		super().__init__(children)
 		self.size = size
 		self.background = background
+		self.frame_rate = 20
+		self._duration = None
+
+	@property
+	def duration(self):
+		if self._duration is not None:
+			return self._duration
+		return ceil(max(map(attrgetter("end_time"), self.traverse_animations())))
+
+	@duration.setter
+	def duration(self, duration):
+		self._duration = duration
 
 
 class Rectangle(Element):
