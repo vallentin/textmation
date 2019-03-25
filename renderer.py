@@ -85,8 +85,7 @@ class Renderer:
 class PILFrame(Frame):
 	def __init__(self, size, background=(0, 0, 0)):
 		super().__init__(size, background)
-		self.image = Image.new("RGB", self.size, tuple(self.background))
-		self.draw = ImageDraw.Draw(self.image, "RGBA")
+		self.image = Image.new("RGBA", self.size, tuple(self.background))
 
 	def save(self, filename):
 		self.image.save(filename)
@@ -94,7 +93,14 @@ class PILFrame(Frame):
 	def draw_rect(self, bounds, color):
 		x, y = bounds[:2]
 		x2, y2 = map(sum, zip(bounds, bounds[2:]))
-		self.draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
+		if color.alpha == 255:
+			draw = ImageDraw.Draw(self.image, "RGBA")
+			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
+		else:
+			image = Image.new("RGBA", self.image.size, (0, 0, 0, 0))
+			draw = ImageDraw.Draw(image, "RGBA")
+			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
+			self.image = Image.alpha_composite(self.image, image)
 
 
 class PILRenderer(Renderer):
