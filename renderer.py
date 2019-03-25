@@ -4,6 +4,7 @@
 from itertools import tee
 from operator import attrgetter
 import os
+from subprocess import run
 
 from PIL import Image, ImageDraw, ImageChops, ImageFont
 
@@ -153,6 +154,10 @@ def _save_gif(filename, frames, frame_rate):
 		optimize=False)
 
 
+def _save_mp4(filename, input_filename_format, frame_count, frame_rate):
+	run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(frame_rate), "-i", input_filename_format, "-frames", str(frame_count), filename])
+
+
 def _render_difference(a, b):
 	if isinstance(a, PILFrame):
 		a = a.image
@@ -288,6 +293,7 @@ if __name__ == "__main__":
 		frames.append(frame)
 
 	_save_gif("output.gif", frames, scene.frame_rate)
+	_save_mp4("output.mp4", "output/frame_%04d.png", len(frames), scene.frame_rate)
 
 	"""
 	frame_differences = []
