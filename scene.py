@@ -8,6 +8,58 @@ import bisect
 from math import ceil
 
 
+def normalize(value, lower, upper):
+	return (value - lower) / (upper - lower)
+
+
+def lerp(a, b, t):
+	# return a + t * (b - a) # Imprecise
+	return (1 - t) * a + t * b # Precise
+
+
+def remap(value, lower1, upper1, lower2, upper2):
+	# return lower2 + (upper2 - lower2) * ((value - lower1) / (upper1 - lower1))
+	return lerp(lower2, upper2, normalize(value, lower1, upper1))
+
+
+def lerp_tuple(a, b, t):
+	try:
+		return lerp(a, b, t)
+	except TypeError:
+		pass
+
+	assert isinstance(a, tuple)
+	assert isinstance(b, tuple)
+	assert len(a) == len(b)
+
+	return tuple(starmap(lerp, zip(a, b, repeat(t))))
+
+
+def lerp_value(a, b, t):
+	try:
+		return lerp_tuple(a, b, t)
+	except AssertionError:
+		return type(a).lerp(a, b, t)
+
+
+class Color:
+	@staticmethod
+	def lerp(a, b, t):
+		return Color(*map(lerp, a, b, repeat(t)))
+
+	def __init__(self, red, green, blue, alpha=255):
+		self.red, self.green, self.blue, self.alpha = red, green, blue, alpha
+
+	def __iter__(self):
+		yield self.red
+		yield self.green
+		yield self.blue
+		yield self.alpha
+
+	def __repr__(self):
+		return "%s(%r, %r, %r, %r)" % (self.__class__.__name__, self.red, self.green, self.blue, self.alpha)
+
+
 class Element:
 	def __init__(self, children=None):
 		if children is None:
@@ -50,6 +102,9 @@ class Element:
 class Scene(Element):
 	def __init__(self, size, background=(0, 0, 0), children=None):
 		super().__init__(children)
+		if not isinstance(background, Color):
+			assert isinstance(background, tuple)
+			background = Color(*background)
 		self.size = size
 		self.background = background
 		self.frame_rate = 20
@@ -69,35 +124,11 @@ class Scene(Element):
 class Rectangle(Element):
 	def __init__(self, bounds, color, children=None):
 		super().__init__(children)
+		if not isinstance(color, Color):
+			assert isinstance(color, tuple)
+			color = Color(*color)
 		self.bounds = bounds
 		self.color = color
-
-
-def normalize(value, lower, upper):
-	return (value - lower) / (upper - lower)
-
-
-def lerp(a, b, t):
-	# return a + t * (b - a) # Imprecise
-	return (1 - t) * a + t * b # Precise
-
-
-def remap(value, lower1, upper1, lower2, upper2):
-	# return lower2 + (upper2 - lower2) * ((value - lower1) / (upper1 - lower1))
-	return lerp(lower2, upper2, normalize(value, lower1, upper1))
-
-
-def lerp_tuple(a, b, t):
-	try:
-		return lerp(a, b, t)
-	except TypeError:
-		pass
-
-	assert isinstance(a, tuple)
-	assert isinstance(b, tuple)
-	assert len(a) == len(b)
-
-	return tuple(starmap(lerp, zip(a, b, repeat(t))))
 
 
 class Animation:
@@ -153,8 +184,10 @@ class Animation:
 		if before == after:
 			return before.value
 
+		# return remap(time, before.time, after.time, before.value, after.value)
+
 		t = normalize(time, before.time, after.time)
-		return lerp_tuple(before.value, after.value, t)
+		return lerp_value(before.value, after.value, t)
 
 
 @total_ordering
