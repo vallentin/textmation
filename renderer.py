@@ -5,7 +5,7 @@ from itertools import tee
 from operator import attrgetter
 import os
 
-from PIL import Image, ImageDraw, ImageChops
+from PIL import Image, ImageDraw, ImageChops, ImageFont
 
 from scene import *
 
@@ -45,6 +45,9 @@ class Frame:
 	def draw_rect(self, bounds, color):
 		raise NotImplementedError
 
+	def draw_text(self, text, position, color, font):
+		raise NotImplementedError
+
 
 class Renderer:
 	def __init__(self):
@@ -55,6 +58,9 @@ class Renderer:
 		return self.frames[-1]
 
 	def _create_frame(self, size, background):
+		raise NotImplementedError
+
+	def _get_font(self, font, size):
 		raise NotImplementedError
 
 	def render(self, element):
@@ -81,6 +87,10 @@ class Renderer:
 	def _render_Rectangle(self, rect):
 		self._frame.draw_rect(rect.bounds, rect.color)
 
+	def _render_Text(self, text):
+		font = self._get_font(text.font, text.font_size)
+		self._frame.draw_text(text.text, text.position, text.color, font)
+
 
 class PILFrame(Frame):
 	def __init__(self, size, background=(0, 0, 0)):
@@ -101,10 +111,33 @@ class PILFrame(Frame):
 			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
 			self.image = Image.alpha_composite(self.image, image)
 
+	def draw_text(self, text, position, color, font):
+		if color.alpha == 255:
+			draw = ImageDraw.Draw(self.image, "RGBA")
+			draw.text(position, text, fill=tuple(map(int, color)), font=font)
+		else:
+			image = Image.new("RGBA", self.image.size, (0, 0, 0, 0))
+			draw = ImageDraw.Draw(image, "RGBA")
+			draw.text(position, text, fill=tuple(map(int, color)), font=font)
+			self.image = Image.alpha_composite(self.image, image)
+
 
 class PILRenderer(Renderer):
+	def __init__(self):
+		super().__init__()
+		self.fonts = {}
+
 	def _create_frame(self, size, background):
 		return PILFrame(size, background)
+
+	def _get_font(self, font, size):
+		size = int(size)
+		try:
+			return self.fonts[font, size]
+		except KeyError:
+			font = ImageFont.truetype(font, size)
+			self.fonts[font, size] = font
+			return font
 
 
 def _save_gif(filename, frames, frame_rate):
@@ -135,8 +168,9 @@ def _render_difference(a, b):
 
 
 if __name__ == "__main__":
-	scene = Scene((200, 200))
+	scene = Scene((400, 400))
 
+	"""
 	r1tl = Rectangle((10, 10, 85, 85), color=(255, 0, 0))
 	r1tr = Rectangle((105, 10, 85, 85), color=(0, 255, 0))
 	r1bl = Rectangle((10, 105, 85, 85), color=(0, 0, 255))
@@ -171,7 +205,9 @@ if __name__ == "__main__":
 	r1tr.add(a1tr)
 	r1bl.add(a1bl)
 	r1br.add(a1br)
+	"""
 
+	"""
 	r2 = Rectangle((50, 50), (255, 255, 255))
 
 	r2a1 = Animation("color")
@@ -204,6 +240,26 @@ if __name__ == "__main__":
 	r2.add_all((r2a1, r2a2, r2a3, r2a4))
 
 	scene.add(r2)
+	"""
+
+	t1 = Text("Hello World")
+
+	t1.position = 20, 20
+	t1.font, t1.font_size = "fonts/Montserrat-Regular.ttf", 32
+
+	t1a1 = Animation("font_size")
+	t1a1.add(Keyframe(0, 30))
+	t1a1.add(Keyframe(1, 50))
+	t1a1.add(Keyframe(2, 30))
+
+	t1a2 = Animation("color.green")
+	t1a2.add(Keyframe(0, 255))
+	t1a2.add(Keyframe(1, 0))
+	t1a2.add(Keyframe(2, 255))
+
+	t1.add_all((t1a1, t1a2))
+
+	scene.add(t1)
 
 	renderer = PILRenderer()
 	frames = []
@@ -215,12 +271,16 @@ if __name__ == "__main__":
 		filename = "output/frame_%04d.png" % frame
 		print("Rendering:", os.path.basename(filename))
 
+		"""
 		r1tl.update_animations(time)
 		r1tr.update_animations(time)
 		r1bl.update_animations(time)
 		r1br.update_animations(time)
 
 		r2.update_animations(time)
+		"""
+
+		t1.update_animations(time)
 
 		frame = renderer.render(scene)
 		frame.save(filename)
@@ -229,6 +289,7 @@ if __name__ == "__main__":
 
 	_save_gif("output.gif", frames, scene.frame_rate)
 
+	"""
 	frame_differences = []
 
 	for i, (frame_before, frame_after) in enumerate(pairwise(frames)):
@@ -238,3 +299,4 @@ if __name__ == "__main__":
 		frame_differences.append(diff)
 
 	_save_gif("output_difference.gif", frame_differences, scene.frame_rate)
+	"""

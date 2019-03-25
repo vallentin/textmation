@@ -232,6 +232,18 @@ class Rectangle(Element):
 		self.bounds.height = height
 
 
+class Text(Element):
+	def __init__(self, text, position=(0, 0)):
+		super().__init__()
+		assert isinstance(position, tuple)
+		assert len(position) == 2
+		self.text = text
+		self.font = "arial"
+		self.font_size = 10
+		self.color = Color(255, 255, 255)
+		self.position = position
+
+
 class Animation:
 	def __init__(self, property=None):
 		self.keyframes = []
