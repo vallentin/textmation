@@ -61,6 +61,48 @@ def setattr_consecutive(obj, name, value):
 	setattr(obj, name, value)
 
 
+class Bounds:
+	@staticmethod
+	def lerp(a, b, t):
+		return Color(*map(lerp, a, b, repeat(t)))
+
+	def __init__(self, x, y, width, height):
+		self.x, self.y, self.width, self.height = x, y, width, height
+
+	def __iter__(self):
+		yield self.x
+		yield self.y
+		yield self.width
+		yield self.height
+
+	@property
+	def x2(self):
+		return self.x + self.width
+
+	@x2.setter
+	def x2(self, x2):
+		self.width = max(x2 - self.x, 0)
+
+	@property
+	def y2(self):
+		return self.y + self.height
+
+	@y2.setter
+	def y2(self, y2):
+		self.height = max(y2 - self.y, 0)
+
+	@property
+	def min(self):
+		return self.x, self.y
+
+	@property
+	def max(self):
+		return self.x2, self.y2
+
+	def __repr__(self):
+		return "%s(%r, %r, %r, %r)" % (self.__class__.__name__, self.x, self.y, self.width, self.height)
+
+
 class Color:
 	@staticmethod
 	def lerp(a, b, t):
@@ -144,13 +186,50 @@ class Scene(Element):
 
 
 class Rectangle(Element):
-	def __init__(self, bounds, color, children=None):
+	def __init__(self, bounds, color=(0, 0, 0), children=None):
 		super().__init__(children)
+		if len(bounds) == 2:
+			bounds = 0, 0, *bounds
+		if not isinstance(bounds, Bounds):
+			assert isinstance(bounds, tuple)
+			bounds = Bounds(*bounds)
 		if not isinstance(color, Color):
 			assert isinstance(color, tuple)
 			color = Color(*color)
 		self.bounds = bounds
 		self.color = color
+
+	@property
+	def x(self):
+		return self.bounds.x
+
+	@x.setter
+	def x(self, x):
+		self.bounds.x = x
+
+	@property
+	def y(self):
+		return self.bounds.y
+
+	@y.setter
+	def y(self, y):
+		self.bounds.y = y
+
+	@property
+	def width(self):
+		return self.bounds.width
+
+	@width.setter
+	def width(self, width):
+		self.bounds.width = width
+
+	@property
+	def height(self):
+		return self.bounds.height
+
+	@height.setter
+	def height(self, height):
+		self.bounds.height = height
 
 
 class Animation:

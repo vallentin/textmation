@@ -91,8 +91,7 @@ class PILFrame(Frame):
 		self.image.save(filename)
 
 	def draw_rect(self, bounds, color):
-		x, y = bounds[:2]
-		x2, y2 = map(sum, zip(bounds, bounds[2:]))
+		(x, y), (x2, y2) = bounds.min, bounds.max
 		if color.alpha == 255:
 			draw = ImageDraw.Draw(self.image, "RGBA")
 			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
@@ -173,6 +172,39 @@ if __name__ == "__main__":
 	r1bl.add(a1bl)
 	r1br.add(a1br)
 
+	r2 = Rectangle((50, 50), (255, 255, 255))
+
+	r2a1 = Animation("color")
+	r2a1.add(Keyframe(0, Color(255, 255, 255)))
+	r2a1.add(Keyframe(0.7, Color(255, 0, 0)))
+	r2a1.add(Keyframe(1.4, Color(0, 255, 0)))
+	r2a1.add(Keyframe(2.1, Color(0, 0, 255)))
+	r2a1.add(Keyframe(2.8, Color(255, 0, 255)))
+	r2a1.add(Keyframe(3.5, Color(255, 255, 255)))
+
+	r2a2 = Animation("bounds.x")
+	r2a2.add(Keyframe(0, 0))
+	r2a2.add(Keyframe(1.75, 150))
+	r2a2.add(Keyframe(3.5, 0))
+
+	r2a3 = Animation("bounds.y")
+	r2a3.add(Keyframe(0, 75))
+	r2a3.add(Keyframe(0.875, 50))
+	r2a3.add(Keyframe(1.75, 75))
+	r2a3.add(Keyframe(2.625, 50))
+	r2a3.add(Keyframe(3.5, 75))
+
+	r2a4 = Animation("bounds.height")
+	r2a4.add(Keyframe(0, 50))
+	r2a4.add(Keyframe(0.875, 100))
+	r2a4.add(Keyframe(1.75, 50))
+	r2a4.add(Keyframe(2.625, 100))
+	r2a4.add(Keyframe(3.5, 50))
+
+	r2.add_all((r2a1, r2a2, r2a3, r2a4))
+
+	scene.add(r2)
+
 	renderer = PILRenderer()
 	frames = []
 
@@ -187,6 +219,8 @@ if __name__ == "__main__":
 		r1tr.update_animations(time)
 		r1bl.update_animations(time)
 		r1br.update_animations(time)
+
+		r2.update_animations(time)
 
 		frame = renderer.render(scene)
 		frame.save(filename)
