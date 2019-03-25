@@ -85,7 +85,7 @@ class Renderer:
 class PILFrame(Frame):
 	def __init__(self, size, background=(0, 0, 0)):
 		super().__init__(size, background)
-		self.image = Image.new("RGBA", self.size, tuple(self.background))
+		self.image = Image.new("RGB", self.size, tuple(self.background))
 		self.draw = ImageDraw.Draw(self.image, "RGBA")
 
 	def save(self, filename):
@@ -139,28 +139,28 @@ if __name__ == "__main__":
 
 	scene.add_all((r1tl, r1tr, r1bl, r1br))
 
-	a1tl = Animation("color")
-	a1tl.add(Keyframe(0, Color(0, 0, 0)))
-	a1tl.add(Keyframe(1, Color(255, 0, 0)))
-	a1tl.add(Keyframe(2, Color(0, 0, 0)))
+	a1tl = Animation("color.alpha")
+	a1tl.add(Keyframe(0, 0))
+	a1tl.add(Keyframe(1, 255))
+	a1tl.add(Keyframe(2, 0))
 
-	a1tr = Animation("color")
+	a1tr = Animation("color.alpha")
 	a1tr.delay = 0.5
-	a1tr.add(Keyframe(0, Color(0, 0, 0)))
-	a1tr.add(Keyframe(1, Color(0, 255, 0)))
-	a1tr.add(Keyframe(2, Color(0, 0, 0)))
+	a1tr.add(Keyframe(0, 0))
+	a1tr.add(Keyframe(1, 255))
+	a1tr.add(Keyframe(2, 0))
 
-	a1bl = Animation("color")
+	a1bl = Animation("color.alpha")
 	a1bl.delay = 1.0
-	a1bl.add(Keyframe(0, Color(0, 0, 0)))
-	a1bl.add(Keyframe(1, Color(0, 0, 255)))
-	a1bl.add(Keyframe(2, Color(0, 0, 0)))
+	a1bl.add(Keyframe(0, 0))
+	a1bl.add(Keyframe(1, 255))
+	a1bl.add(Keyframe(2, 0))
 
-	a1br = Animation("color")
+	a1br = Animation("color.alpha")
 	a1br.delay = 1.5
-	a1br.add(Keyframe(0, Color(0, 0, 0)))
-	a1br.add(Keyframe(1, Color(255, 0, 255)))
-	a1br.add(Keyframe(2, Color(0, 0, 0)))
+	a1br.add(Keyframe(0, 0))
+	a1br.add(Keyframe(1, 255))
+	a1br.add(Keyframe(2, 0))
 
 	r1tl.add(a1tl)
 	r1tr.add(a1tr)

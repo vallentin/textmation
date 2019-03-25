@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from itertools import islice, repeat, starmap
-from functools import total_ordering
+from functools import reduce, total_ordering
 from operator import attrgetter
 import bisect
 from math import ceil
+
+
+_sentinel = object()
 
 
 def normalize(value, lower, upper):
@@ -40,6 +43,22 @@ def lerp_value(a, b, t):
 		return lerp_tuple(a, b, t)
 	except AssertionError:
 		return type(a).lerp(a, b, t)
+
+
+def getattr_consecutive(obj, name, default=_sentinel):
+	try:
+		return reduce(getattr, name.split("."), obj)
+	except AttributeError as e:
+		if default is _sentinel:
+			raise e from None
+		return default
+
+
+def setattr_consecutive(obj, name, value):
+	names, name = name.rpartition(".")[0::2]
+	if names:
+		obj = getattr_consecutive(obj, names)
+	setattr(obj, name, value)
 
 
 class Color:
@@ -93,10 +112,13 @@ class Element:
 		for element in self.traverse():
 			yield from element.animations
 
+	def apply_animation(self, animation, time):
+		value = animation.get_value(time)
+		setattr_consecutive(self, animation.property, value)
+
 	def update_animations(self, time):
 		for animation in self.animations:
-			value = animation.get_value(time)
-			setattr(self, animation.property, value)
+			self.apply_animation(animation, time)
 
 
 class Scene(Element):
