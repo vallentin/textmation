@@ -46,6 +46,9 @@ class Frame:
 	def draw_rect(self, bounds, color):
 		raise NotImplementedError
 
+	def draw_image(self, image, bounds):
+		raise NotImplementedError
+
 	def draw_text(self, text, position, color, font):
 		raise NotImplementedError
 
@@ -59,6 +62,9 @@ class Renderer:
 		return self.frames[-1]
 
 	def _create_frame(self, size, background):
+		raise NotImplementedError
+
+	def _load_image(self, filename):
 		raise NotImplementedError
 
 	def _get_font(self, font, size):
@@ -88,9 +94,26 @@ class Renderer:
 	def _render_Rectangle(self, rect):
 		self._frame.draw_rect(rect.bounds, rect.color)
 
+	def _render_ImageElement(self, image):
+		img = self._load_image(image.filename)
+		self._frame.draw_image(img, image.bounds)
+
 	def _render_Text(self, text):
 		font = self._get_font(text.font, text.font_size)
 		self._frame.draw_text(text.text, text.position, text.color, font)
+
+
+def _is_opaque(image):
+	assert image.mode in ("RGB", "RGBA")
+
+	if image.mode == "RGB":
+		return True
+
+	for _, _, _, a in image.getdata():
+		if a != 255:
+			return False
+
+	return True
 
 
 class PILFrame(Frame):
@@ -112,6 +135,20 @@ class PILFrame(Frame):
 			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
 			self.image = Image.alpha_composite(self.image, image)
 
+	def draw_image(self, image, bounds):
+		if image.size != bounds.size:
+			image = image.resize(bounds.size, Image.NEAREST)
+
+		x, y = map(round, bounds.position)
+		x2, y2 = x + bounds.width, y + bounds.height
+
+		if _is_opaque(image):
+			self.image.paste(image, (x, y, x2, y2))
+		else:
+			_image = Image.new("RGBA", self.image.size, (0, 0, 0, 0))
+			_image.paste(image, (x, y, x2, y2))
+			self.image = Image.alpha_composite(self.image, _image)
+
 	def draw_text(self, text, position, color, font):
 		if color.alpha == 255:
 			draw = ImageDraw.Draw(self.image, "RGBA")
@@ -127,9 +164,18 @@ class PILRenderer(Renderer):
 	def __init__(self):
 		super().__init__()
 		self.fonts = {}
+		self.images = {}
 
 	def _create_frame(self, size, background):
 		return PILFrame(size, background)
+
+	def _load_image(self, filename):
+		try:
+			return self.images[filename]
+		except KeyError:
+			image = Image.open(filename)
+			self.images[filename] = image
+			return image
 
 	def _get_font(self, font, size):
 		size = int(size)

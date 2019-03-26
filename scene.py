@@ -92,6 +92,14 @@ class Bounds:
 		self.height = max(y2 - self.y, 0)
 
 	@property
+	def position(self):
+		return self.x, self.y
+
+	@property
+	def size(self):
+		return self.width, self.height
+
+	@property
 	def min(self):
 		return self.x, self.y
 
@@ -230,6 +238,18 @@ class Rectangle(Element):
 	@height.setter
 	def height(self, height):
 		self.bounds.height = height
+
+
+class ImageElement(Element):
+	def __init__(self, filename, bounds):
+		super().__init__()
+		if len(bounds) == 2:
+			bounds = 0, 0, *bounds
+		if not isinstance(bounds, Bounds):
+			assert isinstance(bounds, tuple)
+			bounds = Bounds(*bounds)
+		self.filename = filename
+		self.bounds = bounds
 
 
 class Text(Element):
