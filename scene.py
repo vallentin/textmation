@@ -186,7 +186,7 @@ class Scene(Element):
 	def duration(self):
 		if self._duration is not None:
 			return self._duration
-		return ceil(max(map(attrgetter("end_time"), self.traverse_animations())))
+		return ceil(max(map(attrgetter("end_time"), self.traverse_animations()), default=0))
 
 	@duration.setter
 	def duration(self, duration):
