@@ -150,6 +150,14 @@ class PILFrame(Frame):
 			self.image = Image.alpha_composite(self.image, _image)
 
 	def draw_text(self, text, position, color, font):
+		text_width, text_height = font.getsize(text)
+		text_offset_x, text_offset_y = font.getoffset(text)
+
+		x, y = position
+		x -= (text_width + text_offset_x) / 2
+		y -= (text_height + text_offset_y) / 2
+		position = x, y
+
 		if color.alpha == 255:
 			draw = ImageDraw.Draw(self.image, "RGBA")
 			draw.text(position, text, fill=tuple(map(int, color)), font=font)
