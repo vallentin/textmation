@@ -330,16 +330,8 @@ if __name__ == "__main__":
 		filename = "output/frame_%04d.png" % frame
 		print("Rendering:", os.path.basename(filename))
 
-		"""
-		r1tl.update_animations(time)
-		r1tr.update_animations(time)
-		r1bl.update_animations(time)
-		r1br.update_animations(time)
-
-		r2.update_animations(time)
-		"""
-
-		t1.update_animations(time)
+		for element in scene.traverse():
+			element.update_animations(time)
 
 		frame = renderer.render(scene)
 		frame.save(filename)
