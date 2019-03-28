@@ -5,6 +5,11 @@ from .descriptors import *
 
 
 class Color:
+	red = IntProperty()
+	green = IntProperty()
+	blue = IntProperty()
+	alpha = IntProperty()
+
 	def __init__(self, red=0, green=0, blue=0, alpha=255):
 		self.red, self.green, self.blue, self.alpha = red, green, blue, alpha
 
@@ -16,6 +21,9 @@ class Color:
 
 
 class Point:
+	x = FloatProperty()
+	y = FloatProperty()
+
 	def __init__(self, x=0, y=None):
 		if y is None:
 			y = x
@@ -51,6 +59,9 @@ class Rect:
 		if size is None and position is not None:
 			size = position
 			position = None
+
+		assert position is None or isinstance(position, Point)
+		assert size is None or isinstance(size, (Point, Size))
 
 		if position is not None:
 			self.position = position

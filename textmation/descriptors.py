@@ -34,3 +34,32 @@ class NonNegative:
 
 	def __set_name__(self, owner, name):
 		self.name = name
+
+
+class TypedProperty:
+	def __init__(self, type):
+		self.type = type
+
+	def __get__(self, instance, owner):
+		return instance.__dict__[self.name]
+
+	def __set__(self, instance, value):
+		if not isinstance(value, self.type):
+			if isinstance(value, tuple):
+				value = self.type(*value)
+			else:
+				value = self.type(value)
+		instance.__dict__[self.name] = value
+
+	def __set_name__(self, owner, name):
+		self.name = name
+
+
+class IntProperty(TypedProperty):
+	def __init__(self):
+		super().__init__(int)
+
+
+class FloatProperty(TypedProperty):
+	def __init__(self):
+		super().__init__(float)
