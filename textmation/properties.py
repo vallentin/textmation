@@ -13,6 +13,12 @@ class Color:
 	def __init__(self, red=0, green=0, blue=0, alpha=255):
 		self.red, self.green, self.blue, self.alpha = red, green, blue, alpha
 
+	def __iter__(self):
+		yield self.red
+		yield self.green
+		yield self.blue
+		yield self.alpha
+
 	def __repr__(self):
 		if self.alpha == 255:
 			return f"{self.__class__.__name__}({self.red!r}, {self.green!r}, {self.blue!r})"
@@ -32,6 +38,10 @@ class Point:
 	def set(self, point):
 		self.x, self.y = point.x, point.y
 
+	def __iter__(self):
+		yield self.x
+		yield self.y
+
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.x!r}, {self.y!r})"
 
@@ -47,6 +57,17 @@ class Size:
 
 	def set(self, size):
 		self.width, self.height = size.width, size.height
+
+	@property
+	def area(self):
+		return self.width * self.height
+
+	def __eq__(self, other):
+		return self.width == other.width and self.height == other.height
+
+	def __iter__(self):
+		yield self.width
+		yield self.height
 
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.width!r}, {self.height!r})"
@@ -106,6 +127,11 @@ class Rect:
 		self.size = Size(
 			max.x - self.position.x,
 			max.y - self.position.y)
+
+	def __iter__(self):
+		# TODO: Yield (min, size) or (min, max)
+		yield from self.position
+		yield from self.size
 
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.position!r}, {self.size!r})"
