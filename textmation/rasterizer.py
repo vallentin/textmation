@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from itertools import chain
+from operator import attrgetter
 from enum import IntEnum
 
 from PIL import Image as _Image
+from PIL import ImageDraw as _ImageDraw
 
 from .properties import Color, Point, Size, Rect
 
@@ -40,6 +42,20 @@ class Image:
 		image = _Image.open(filename)
 		image.load()
 		return Image(image)
+
+	@staticmethod
+	def save_gif(filename, frames, frame_rate):
+		assert len(frames) > 0
+
+		frames = list(map(attrgetter("_image"), frames))
+
+		frames[0].save(
+			filename,
+			append_images=frames[1:],
+			save_all=True,
+			duration=1000 / frame_rate,
+			loop=0,
+			optimize=False)
 
 	def __init__(self, image):
 		self._image = image
@@ -101,3 +117,18 @@ class Image:
 			self._image = _Image.alpha_composite(self._image, _image)
 		else:
 			self._image.paste(image._image, (x, y, x2, y2))
+
+	def draw_rect(self, bounds, color):
+		assert isinstance(bounds, Rect)
+		assert isinstance(color, Color)
+
+		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
+
+		if color.alpha == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
+		else:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
+			self._image = _Image.alpha_composite(self._image, image)
