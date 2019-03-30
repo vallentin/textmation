@@ -36,6 +36,19 @@ class NonNegative:
 		self.name = name
 
 
+class Positive:
+	def __get__(self, instance, owner):
+		return instance.__dict__[self.name]
+
+	def __set__(self, instance, value):
+		if value <= 0:
+			raise ValueError("Value must be positive")
+		instance.__dict__[self.name] = value
+
+	def __set_name__(self, owner, name):
+		self.name = name
+
+
 class TypedProperty:
 	def __init__(self, type):
 		self.type = type
