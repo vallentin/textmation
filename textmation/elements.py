@@ -95,3 +95,25 @@ class Rectangle(Element):
 		assert isinstance(color, Color)
 		self.bounds = bounds
 		self.color = color
+
+
+class Text(Element):
+	text = StringProperty()
+	font = StringProperty()
+	font_size = Positive()
+	color = TypedProperty(Color)
+	bounds = TypedProperty(Rect)
+
+	def __init__(self, text=None, position=None):
+		super().__init__()
+		if text is None:
+			text = ""
+		if position is None:
+			position = Point()
+		assert isinstance(text, str)
+		assert isinstance(position, Point)
+		self.text = text
+		self.font = "arial"
+		self.font_size = 32
+		self.color = Color(255, 255, 255)
+		self.position = position

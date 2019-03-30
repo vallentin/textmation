@@ -76,3 +76,8 @@ class IntProperty(TypedProperty):
 class FloatProperty(TypedProperty):
 	def __init__(self):
 		super().__init__(float)
+
+
+class StringProperty(TypedProperty):
+	def __init__(self):
+		super().__init__(str)

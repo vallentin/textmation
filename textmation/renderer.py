@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from .elements import Element, Scene
-from .rasterizer import Image
+from .rasterizer import Image, Font
 
 
 def iter_frame_time(duration, frame_rate, *, inclusive=False):
@@ -44,6 +44,11 @@ class Renderer:
 	def _render_Rectangle(self, rect):
 		self._image.draw_rect(rect.bounds, rect.color)
 		self._render_children(rect)
+
+	def _render_Text(self, text):
+		font = Font.load(text.font, text.font_size)
+		self._image.draw_text(text.text, text.position, text.color, font)
+		self._render_children(text)
 
 
 def _render(renderer, scene, time):

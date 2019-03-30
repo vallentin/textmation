@@ -1,10 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from itertools import repeat
+
 from .descriptors import *
+from .animation import lerp
 
 
 class Color:
+	@staticmethod
+	def lerp(a, b, t):
+		return Color(*map(lerp, a, b, repeat(t)))
+
 	red = IntProperty()
 	green = IntProperty()
 	blue = IntProperty()

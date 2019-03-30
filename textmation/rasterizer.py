@@ -7,8 +7,12 @@ from enum import IntEnum
 
 from PIL import Image as _Image
 from PIL import ImageDraw as _ImageDraw
+from PIL import ImageFont as _ImageFont
 
 from .properties import Color, Point, Size, Rect
+
+
+_fonts = {}
 
 
 class ResamplingFilter(IntEnum):
@@ -132,3 +136,52 @@ class Image:
 			draw = _ImageDraw.Draw(image, "RGBA")
 			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
 			self._image = _Image.alpha_composite(self._image, image)
+
+	def draw_text(self, text, position, color, font):
+		assert isinstance(text, str)
+		assert isinstance(position, Point)
+		assert isinstance(color, Color)
+		assert isinstance(font, Font)
+
+		text_width, text_height = font.measure_text(text)
+		text_offset_x, text_offset_y = font.get_offset(text)
+
+		x, y = position
+		x -= (text_width + text_offset_x) / 2
+		y -= (text_height + text_offset_y) / 2
+		position = x, y
+
+		if color.alpha == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			draw.text(position, text, fill=tuple(map(int, color)), font=font._font)
+		else:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			draw.text(position, text, fill=tuple(map(int, color)), font=font._font)
+			self._image = _Image.alpha_composite(self._image, image)
+
+
+class Font:
+	@staticmethod
+	def load(font, size):
+		size = int(size)
+		try:
+			return _fonts[font, size]
+		except KeyError:
+			font = _ImageFont.truetype(font, size)
+			_fonts[font, size] = font
+			return Font(font, size)
+
+	def __init__(self, font, size):
+		self._font = font
+		self._size = size
+
+	@property
+	def size(self):
+		return self._size
+
+	def measure_text(self, text):
+		return self._font.getsize(text)
+
+	def get_offset(self, text):
+		return self._font.getoffset(text)
