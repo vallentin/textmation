@@ -126,6 +126,9 @@ class Image:
 		assert isinstance(bounds, Rect)
 		assert isinstance(color, Color)
 
+		if color.alpha == 0:
+			return
+
 		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
 
 		if color.alpha == 255:
@@ -142,6 +145,9 @@ class Image:
 		assert isinstance(position, Point)
 		assert isinstance(color, Color)
 		assert isinstance(font, Font)
+
+		if color.alpha == 0:
+			return
 
 		text_width, text_height = font.measure_text(text)
 		text_offset_x, text_offset_y = font.get_offset(text)
