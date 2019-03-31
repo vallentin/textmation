@@ -52,8 +52,7 @@ class Renderer:
 
 
 def _render(renderer, scene, time):
-	for element in scene.traverse():
-		element.update_animations(time)
+	scene.update(time)
 	return renderer.render(scene)
 
 

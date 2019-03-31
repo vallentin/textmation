@@ -51,6 +51,10 @@ class Element:
 		for animation in self.animations:
 			self.apply_animation(animation, time)
 
+	def update(self, time):
+		for element in self.traverse():
+			element.update_animations(time)
+
 
 class Scene(Element):
 	size = TypedProperty(Size)
