@@ -59,7 +59,7 @@ class Renderer:
 
 	def _render_Text(self, text):
 		font = Font.load(text.font, text.font_size)
-		self._image.draw_text(text.text, text.position, text.color, font)
+		self._image.draw_text(text.text, text.position, text.color, font, text.alignment)
 		self._render_children(text)
 
 

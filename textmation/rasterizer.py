@@ -3,7 +3,7 @@
 
 from itertools import chain
 from operator import attrgetter
-from enum import IntEnum
+from enum import Enum, IntEnum
 
 from PIL import Image as _Image
 from PIL import ImageDraw as _ImageDraw
@@ -18,6 +18,12 @@ _fonts = {}
 class ResamplingFilter(IntEnum):
 	Nearest = _Image.NEAREST
 	Bilinear = _Image.BILINEAR
+
+
+class Alignment(Enum):
+	Left = "left"
+	Center = "center"
+	Right = "right"
 
 
 def _is_opaque(image):
@@ -182,30 +188,33 @@ class Image:
 			draw.line((x, y, x2, y2), fill=tuple(map(int, color)), width=int(width))
 			self._image = _Image.alpha_composite(self._image, image)
 
-	def draw_text(self, text, position, color, font):
+	def draw_text(self, text, position, color, font, alignment=Alignment.Left):
 		assert isinstance(text, str)
 		assert isinstance(position, Point)
 		assert isinstance(color, Color)
 		assert isinstance(font, Font)
+		assert isinstance(alignment, Alignment)
 
 		if color.alpha == 0:
 			return
 
-		text_width, text_height = font.measure_text(text)
-		text_offset_x, text_offset_y = font.get_offset(text)
+		# text_width, text_height = font.measure_text(text)
+		# text_offset_x, text_offset_y = font.get_offset(text)
 
-		x, y = position
-		x -= (text_width + text_offset_x) / 2
-		y -= (text_height + text_offset_y) / 2
-		position = x, y
+		# x, y = position
+		# x -= (text_width + text_offset_x) / 2
+		# y -= (text_height + text_offset_y) / 2
+		# position = x, y
+
+		position = tuple(position)
 
 		if color.alpha == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.text(position, text, fill=tuple(map(int, color)), font=font._font)
+			draw.text(position, text, fill=tuple(map(int, color)), font=font._font, align=alignment.value)
 		else:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.text(position, text, fill=tuple(map(int, color)), font=font._font)
+			draw.text(position, text, fill=tuple(map(int, color)), font=font._font, align=alignment.value)
 			self._image = _Image.alpha_composite(self._image, image)
 
 

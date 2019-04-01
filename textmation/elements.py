@@ -7,6 +7,7 @@ from math import ceil
 from .descriptors import *
 from .properties import *
 from .animation import Animation
+from .rasterizer import Alignment
 from .utilities import setattr_consecutive
 
 
@@ -199,19 +200,25 @@ class Text(Element):
 	text = StringProperty()
 	font = StringProperty()
 	font_size = Positive()
+	alignment = TypedProperty(Alignment)
+	position = TypedProperty(Point)
 	color = TypedProperty(Color)
-	bounds = TypedProperty(Rect)
 
-	def __init__(self, text=None, position=None):
+	def __init__(self, text=None, position=None, alignment=Alignment.Left):
 		super().__init__()
+
 		if text is None:
 			text = ""
 		if position is None:
 			position = Point()
+
 		assert isinstance(text, str)
 		assert isinstance(position, Point)
+		assert isinstance(alignment, Alignment)
+
 		self.text = text
 		self.font = "arial"
 		self.font_size = 32
-		self.color = Color(255, 255, 255)
+		self.alignment = alignment
 		self.position = position
+		self.color = Color(255, 255, 255)
