@@ -18,7 +18,7 @@ class FadeInOut(Animation):
 
 
 @timeit()
-def example_01():
+def example_renderer():
 	scene = Scene(Size(200, 200), Color(0, 0, 0))
 
 	r1 = Rectangle(Rect(Point(10, 10), Size(85, 85)), Color(255, 0, 0))
@@ -43,5 +43,22 @@ def example_01():
 	Image.save_gif("output.gif", frames, scene.frame_rate)
 
 
+def example_rasterizer():
+	img = Image.new(Size(200, 200), Color(0, 0, 0))
+
+	img.draw_rect(Rect(Point(50, 50), Size(100, 100)), Color(255, 255, 255))
+
+	img.draw_rect(Rect(Point(0, 0), Size(100, 100)), Color(255, 0, 0, 155))
+	img.draw_rect(Rect(Point(100, 0), Size(100, 100)), Color(0, 255, 0, 155))
+	img.draw_rect(Rect(Point(0, 100), Size(100, 100)), Color(0, 0, 255, 155))
+	img.draw_rect(Rect(Point(100, 100), Size(100, 100)), Color(255, 0, 255, 155))
+
+	font = Font.load("arial", 26)
+	img.draw_text("Hello World", Point(100, 25), Color(255, 255, 255), font)
+
+	img.save("output.png")
+
+
 if __name__ == "__main__":
-	example_01()
+	example_renderer()
+	# example_rasterizer()
