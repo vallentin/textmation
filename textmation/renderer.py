@@ -42,7 +42,7 @@ class Renderer:
 		return self._image
 
 	def _render_Rectangle(self, rect):
-		self._image.draw_rect(rect.bounds, rect.color)
+		self._image.draw_rect(rect.bounds, rect.color, rect.outline_color, rect.outline_width)
 		self._render_children(rect)
 
 	def _render_Text(self, text):

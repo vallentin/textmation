@@ -88,17 +88,27 @@ class Scene(Element):
 class Rectangle(Element):
 	bounds = TypedProperty(Rect)
 	color = TypedProperty(Color)
+	outline_color = TypedProperty(Color)
+	outline_width = NonNegative()
 
-	def __init__(self, bounds=None, color=None):
+	def __init__(self, bounds=None, color=None, outline_color=None, outline_width=1):
 		super().__init__()
+
 		if bounds is None:
 			bounds = Rect()
 		if color is None:
 			color = Color()
+		if outline_color is None:
+			outline_color = Color(0, 0, 0, 0)
+
 		assert isinstance(bounds, Rect)
 		assert isinstance(color, Color)
+		assert isinstance(outline_color, Color)
+
 		self.bounds = bounds
 		self.color = color
+		self.outline_color = outline_color
+		self.outline_width = outline_width
 
 
 class Text(Element):

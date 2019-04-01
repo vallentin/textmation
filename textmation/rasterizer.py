@@ -122,22 +122,23 @@ class Image:
 		else:
 			self._image.paste(image._image, (x, y, x2, y2))
 
-	def draw_rect(self, bounds, color):
+	def draw_rect(self, bounds, color, outline_color=Color(0, 0, 0, 0), outline_width=1):
 		assert isinstance(bounds, Rect)
 		assert isinstance(color, Color)
+		assert isinstance(outline_color, Color)
 
-		if color.alpha == 0:
+		if color.alpha == 0 and outline_color.alpha == 0:
 			return
 
 		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
 
 		if color.alpha == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
+			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
 		else:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)))
+			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
 	def draw_text(self, text, position, color, font):
