@@ -45,6 +45,14 @@ class Renderer:
 		self._image.draw_rect(rect.bounds, rect.color, rect.outline_color, rect.outline_width)
 		self._render_children(rect)
 
+	def _render_Circle(self, circle):
+		self._image.draw_circle(circle.center, circle.radius, circle.color, circle.outline_color, circle.outline_width)
+		self._render_children(circle)
+
+	def _render_Ellipse(self, ellipse):
+		self._image.draw_ellipse(ellipse.center, ellipse.radius_x, ellipse.radius_y, ellipse.color, ellipse.outline_color, ellipse.outline_width)
+		self._render_children(ellipse)
+
 	def _render_Text(self, text):
 		font = Font.load(text.font, text.font_size)
 		self._image.draw_text(text.text, text.position, text.color, font)

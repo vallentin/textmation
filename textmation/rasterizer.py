@@ -141,6 +141,28 @@ class Image:
 			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
+	def draw_circle(self, center, radius, color, outline_color=Color(0, 0, 0, 0), outline_width=1):
+		self.draw_ellipse(center, radius, radius, color, outline_color, outline_width)
+
+	def draw_ellipse(self, center, radius_x, radius_y, color, outline_color=Color(0, 0, 0, 0), outline_width=1):
+		assert isinstance(center, Point)
+		assert isinstance(color, Color)
+		assert isinstance(outline_color, Color)
+
+		if color.alpha == 0 and outline_color.alpha == 0:
+			return
+
+		x, y, x2, y2 = center.x - radius_x, center.y - radius_y, center.x + radius_x, center.y + radius_y
+
+		if color.alpha == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			draw.ellipse((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
+		else:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			draw.ellipse((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
+			self._image = _Image.alpha_composite(self._image, image)
+
 	def draw_text(self, text, position, color, font):
 		assert isinstance(text, str)
 		assert isinstance(position, Point)

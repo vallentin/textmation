@@ -111,6 +111,64 @@ class Rectangle(Element):
 		self.outline_width = outline_width
 
 
+class Circle(Element):
+	center = TypedProperty(Point)
+	radius = NonNegative()
+	color = TypedProperty(Color)
+	outline_color = TypedProperty(Color)
+	outline_width = NonNegative()
+
+	def __init__(self, center=None, radius=1, color=None, outline_color=None, outline_width=1):
+		super().__init__()
+
+		if center is None:
+			center = Point()
+		if color is None:
+			color = Color()
+		if outline_color is None:
+			outline_color = Color(0, 0, 0, 0)
+
+		assert isinstance(center, Point)
+		assert isinstance(color, Color)
+		assert isinstance(outline_color, Color)
+
+		self.center = center
+		self.radius = radius
+		self.color = color
+		self.outline_color = outline_color
+		self.outline_width = outline_width
+
+
+class Ellipse(Element):
+	center = TypedProperty(Point)
+	radius_x = NonNegative()
+	radius_y = NonNegative()
+	color = TypedProperty(Color)
+	outline_color = TypedProperty(Color)
+	outline_width = NonNegative()
+
+	def __init__(self, center=None, radius_x=1, radius_y=None, color=None, outline_color=None, outline_width=1):
+		super().__init__()
+
+		if center is None:
+			center = Point()
+		if color is None:
+			color = Color()
+		if outline_color is None:
+			outline_color = Color(0, 0, 0, 0)
+
+		assert isinstance(center, Point)
+		assert isinstance(color, Color)
+		assert isinstance(outline_color, Color)
+
+		self.center = center
+		self.radius_x = radius_x
+		self.radius_y = radius_y
+		self.color = color
+		self.outline_color = outline_color
+		self.outline_width = outline_width
+
+
 class Text(Element):
 	text = StringProperty()
 	font = StringProperty()
