@@ -163,6 +163,25 @@ class Image:
 			draw.ellipse((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
+	def draw_line(self, p1, p2, color, width):
+		assert isinstance(p1, Point)
+		assert isinstance(p2, Point)
+		assert isinstance(color, Color)
+
+		if color.alpha == 0:
+			return
+
+		x, y, x2, y2 = p1.x, p1.y, p2.x, p2.y
+
+		if color.alpha == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			draw.line((x, y, x2, y2), fill=tuple(map(int, color)), width=int(width))
+		else:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			draw.line((x, y, x2, y2), fill=tuple(map(int, color)), width=int(width))
+			self._image = _Image.alpha_composite(self._image, image)
+
 	def draw_text(self, text, position, color, font):
 		assert isinstance(text, str)
 		assert isinstance(position, Point)

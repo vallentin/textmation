@@ -169,6 +169,32 @@ class Ellipse(Element):
 		self.outline_width = outline_width
 
 
+class Line(Element):
+	p1 = TypedProperty(Point)
+	p2 = TypedProperty(Point)
+	width = NonNegative()
+	color = TypedProperty(Color)
+
+	def __init__(self, p1=None, p2=None, color=None, width=1):
+		super().__init__()
+
+		if p1 is None:
+			p1 = Point()
+		if p2 is None:
+			p2 = Point()
+		if color is None:
+			color = Color()
+
+		assert isinstance(p1, Point)
+		assert isinstance(p2, Point)
+		assert isinstance(color, Color)
+
+		self.p1 = p1
+		self.p2 = p2
+		self.width = width
+		self.color = color
+
+
 class Text(Element):
 	text = StringProperty()
 	font = StringProperty()
