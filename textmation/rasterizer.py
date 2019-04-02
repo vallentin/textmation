@@ -3,7 +3,7 @@
 
 from itertools import chain
 from operator import attrgetter
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, IntFlag
 
 from PIL import Image as _Image
 from PIL import ImageDraw as _ImageDraw
@@ -18,6 +18,16 @@ _fonts = {}
 class ResamplingFilter(IntEnum):
 	Nearest = _Image.NEAREST
 	Bilinear = _Image.BILINEAR
+
+
+class Anchor(IntFlag):
+	Left = 1
+	CenterX = 2
+	Right = 4
+	Top = 8
+	CenterY = 16
+	Bottom = 32
+	Center = CenterX | CenterY
 
 
 class Alignment(Enum):
@@ -188,7 +198,7 @@ class Image:
 			draw.line((x, y, x2, y2), fill=tuple(map(int, color)), width=int(width))
 			self._image = _Image.alpha_composite(self._image, image)
 
-	def draw_text(self, text, position, color, font, alignment=Alignment.Left):
+	def draw_text(self, text, position, color, font, anchor=Anchor.Center, alignment=Alignment.Left):
 		assert isinstance(text, str)
 		assert isinstance(position, Point)
 		assert isinstance(color, Color)
@@ -198,15 +208,22 @@ class Image:
 		if color.alpha == 0:
 			return
 
-		# text_width, text_height = font.measure_text(text)
-		# text_offset_x, text_offset_y = font.get_offset(text)
+		text_width, text_height = font.measure_text(text)
+		text_offset_x, text_offset_y = font.get_offset(text)
 
-		# x, y = position
-		# x -= (text_width + text_offset_x) / 2
-		# y -= (text_height + text_offset_y) / 2
-		# position = x, y
+		x, y = position
 
-		position = tuple(position)
+		if anchor & Anchor.CenterX:
+			x -= (text_width + text_offset_x) / 2
+		elif anchor & Anchor.Right:
+			x -= text_width + text_offset_x
+
+		if anchor & Anchor.CenterY:
+			y -= (text_height + text_offset_y) / 2
+		elif anchor & Anchor.Bottom:
+			y -= text_height + text_offset_y
+
+		position = x, y
 
 		if color.alpha == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
@@ -237,8 +254,23 @@ class Font:
 	def size(self):
 		return self._size
 
-	def measure_text(self, text):
-		return self._font.getsize(text)
+	def measure_line(self, line):
+		return self._font.getsize(line)
+
+	def measure_lines(self, text):
+		for line in text.splitlines():
+			yield self.measure_line(line)
+
+	def measure_text(self, text, spacing=4):
+		width, height = 0, 0
+
+		for i, (w, h) in enumerate(self.measure_lines(text)):
+			width = max(width, w)
+			height += h
+			if i > 0:
+				height += spacing
+
+		return width, height
 
 	def get_offset(self, text):
 		return self._font.getoffset(text)
