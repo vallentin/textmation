@@ -148,6 +148,10 @@ class Image:
 
 		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
 
+		# Reference: https://github.com/python-pillow/Pillow/issues/1668
+		x2 -= 1
+		y2 -= 1
+
 		color = tuple(map(int, color))
 		outline_color = tuple(map(int, outline_color))
 
