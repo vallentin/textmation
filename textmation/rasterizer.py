@@ -179,7 +179,7 @@ class Image:
 			draw.ellipse((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
-	def draw_line(self, p1, p2, color, width):
+	def draw_line(self, p1, p2, color, width=1):
 		assert isinstance(p1, Point)
 		assert isinstance(p2, Point)
 		assert isinstance(color, Color)

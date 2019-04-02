@@ -54,7 +54,7 @@ class Renderer:
 		self._render_children(ellipse)
 
 	def _render_Line(self, line):
-		self._image.draw_line(line.start_point, line.end_point, line.color, line.size)
+		self._image.draw_line(line.start_point, line.end_point, line.color, line.width)
 		self._render_children(line)
 
 	def _render_Text(self, text):
