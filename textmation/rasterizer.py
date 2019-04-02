@@ -148,13 +148,25 @@ class Image:
 
 		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
 
-		if color.alpha == 255:
+		color = tuple(map(int, color))
+		outline_color = tuple(map(int, outline_color))
+
+		if color[3] == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
-		else:
+			draw.rectangle((x, y, x2, y2), fill=color)
+		elif color[3] > 0:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.rectangle((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
+			draw.rectangle((x, y, x2, y2), fill=color)
+			self._image = _Image.alpha_composite(self._image, image)
+
+		if outline_color[3] == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			draw.rectangle((x, y, x2, y2), outline=outline_color, width=int(outline_width))
+		elif outline_color[3] > 0:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			draw.rectangle((x, y, x2, y2), outline=outline_color, width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
 	def draw_circle(self, center, radius, color, outline_color=Color(0, 0, 0, 0), outline_width=1):
@@ -170,13 +182,25 @@ class Image:
 
 		x, y, x2, y2 = center.x - radius_x, center.y - radius_y, center.x + radius_x, center.y + radius_y
 
-		if color.alpha == 255:
+		color = tuple(map(int, color))
+		outline_color = tuple(map(int, outline_color))
+
+		if color[3] == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.ellipse((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
-		else:
+			draw.ellipse((x, y, x2, y2), fill=color)
+		elif color[3] > 0:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.ellipse((x, y, x2, y2), fill=tuple(map(int, color)), outline=tuple(map(int, outline_color)), width=int(outline_width))
+			draw.ellipse((x, y, x2, y2), fill=color)
+			self._image = _Image.alpha_composite(self._image, image)
+
+		if outline_color[3] == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			draw.ellipse((x, y, x2, y2), outline=outline_color, width=int(outline_width))
+		elif outline_color[3] > 0:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			draw.ellipse((x, y, x2, y2), outline=outline_color, width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
 	def draw_line(self, p1, p2, color, width=1):
