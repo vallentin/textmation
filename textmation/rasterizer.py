@@ -262,6 +262,41 @@ class Image:
 			draw.text(position, text, fill=tuple(map(int, color)), font=font._font, align=alignment.value)
 			self._image = _Image.alpha_composite(self._image, image)
 
+	def draw_polygon(self, points, color, outline_color=Color(0, 0, 0, 0), outline_width=1):
+		list_points = ()
+		for p in points:
+			assert isinstance(p, Point)
+			list_points += (p.x, p.y)
+		assert isinstance(color, Color)
+		assert isinstance(outline_color, Color)
+
+		color = tuple(map(int, color))
+		outline_color = tuple(map(int, outline_color))
+
+		if color[3] == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			draw.polygon(list_points, fill=color)
+		elif color[3] > 0:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			draw.polygon(list_points, fill=color)
+			self._image = _Image.alpha_composite(self._image, image)
+
+		if outline_color[3] == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			for i in range(0, len(points)):
+				x, y = points[i - 1].x, points[i - 1].y
+				x2, y2 = points[i].x, points[i].y
+				draw.line((x, y, x2, y2), fill=outline_color, width=int(outline_width))
+		elif outline_color[3] > 0:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			for i in range(0, len(points)):
+				x, y = points[i - 1].x, points[i - 1].y
+				x2, y2 = points[i].x, points[i].y
+				draw.line((x, y, x2, y2), fill=outline_color, width=int(outline_width))
+			self._image = _Image.alpha_composite(self._image, image)
+
 
 class Font:
 	@staticmethod

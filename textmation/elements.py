@@ -224,3 +224,30 @@ class Text(Element):
 		self.alignment = alignment
 		self.position = position
 		self.color = Color(255, 255, 255)
+
+
+class Polygon(Element):
+	color = TypedProperty(Color)
+	outline_color = TypedProperty(Color)
+	outline_width = NonNegative()
+
+	def __init__(self, *points, color=None, outline_color=None, outline_width=1):
+		super().__init__()
+
+		if points is None:
+			points = Point()
+		if color is None:
+			color = Color()
+		if outline_color is None:
+			outline_color = Color(0, 0, 0, 0)
+
+		assert isinstance(color, Color)
+		assert isinstance(outline_color, Color)
+		for p in points:
+			assert isinstance(p, Point)
+
+		self.points = points
+		self.color = color
+		self.outline_color = outline_color
+		self.outline_width = outline_width
+
