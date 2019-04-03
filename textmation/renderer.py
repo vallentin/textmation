@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from contextlib import contextmanager
+
+from .properties import Point
 from .elements import Element, Scene
 from .rasterizer import Image, Font
 
@@ -18,7 +21,17 @@ def iter_frame_time(duration, frame_rate, *, inclusive=False):
 class Renderer:
 	def __init__(self):
 		self._image = None
-		pass
+		self._translations = [Point(0, 0)]
+
+	@property
+	def translation(self):
+		return self._translations[-1]
+
+	@contextmanager
+	def translate(self, offset):
+		self._translations.append(self.translation + offset)
+		yield self
+		self._translations.pop()
 
 	def render(self, element):
 		assert isinstance(element, Scene)
@@ -41,25 +54,29 @@ class Renderer:
 		self._render_children(scene)
 		return self._image
 
+	def _render_Group(self, group):
+		with self.translate(group.position):
+			self._render_children(group)
+
 	def _render_Rectangle(self, rect):
-		self._image.draw_rect(rect.bounds, rect.color, rect.outline_color, rect.outline_width)
+		self._image.draw_rect(self.translation + rect.bounds, rect.color, rect.outline_color, rect.outline_width)
 		self._render_children(rect)
 
 	def _render_Circle(self, circle):
-		self._image.draw_circle(circle.center, circle.radius, circle.color, circle.outline_color, circle.outline_width)
+		self._image.draw_circle(self.translation + circle.center, circle.radius, circle.color, circle.outline_color, circle.outline_width)
 		self._render_children(circle)
 
 	def _render_Ellipse(self, ellipse):
-		self._image.draw_ellipse(ellipse.center, ellipse.radius_x, ellipse.radius_y, ellipse.color, ellipse.outline_color, ellipse.outline_width)
+		self._image.draw_ellipse(self.translation + ellipse.center, ellipse.radius_x, ellipse.radius_y, ellipse.color, ellipse.outline_color, ellipse.outline_width)
 		self._render_children(ellipse)
 
 	def _render_Line(self, line):
-		self._image.draw_line(line.start_point, line.end_point, line.color, line.width)
+		self._image.draw_line(self.translation + line.start_point, self.translation + line.end_point, line.color, line.width)
 		self._render_children(line)
 
 	def _render_Text(self, text):
 		font = Font.load(text.font, text.font_size)
-		self._image.draw_text(text.text, text.position, text.color, font, text.anchor, text.alignment)
+		self._image.draw_text(text.text, self.translation + text.position, text.color, font, text.anchor, text.alignment)
 		self._render_children(text)
 
 

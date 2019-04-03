@@ -86,6 +86,18 @@ class Scene(Element):
 		self._duration = duration
 
 
+class Group(Element):
+	position = TypedProperty(Point)
+
+	def __init__(self, position=None):
+		super().__init__()
+
+		if position is None:
+			position = Point()
+
+		self.position = position
+
+
 class Rectangle(Element):
 	bounds = TypedProperty(Rect)
 	color = TypedProperty(Color)

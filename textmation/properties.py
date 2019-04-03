@@ -44,6 +44,16 @@ class Point:
 
 	def set(self, point):
 		self.x, self.y = point.x, point.y
+		return self
+
+	def copy(self):
+		return Point().set(self)
+
+	def __add__(self, other):
+		if isinstance(other, Point):
+			return Point(self.x + other.x, self.y + other.y)
+		else:
+			return other.__radd__(self)
 
 	def __iter__(self):
 		yield self.x
@@ -64,6 +74,10 @@ class Size:
 
 	def set(self, size):
 		self.width, self.height = size.width, size.height
+		return self
+
+	def copy(self):
+		return Size().set(self)
 
 	@property
 	def area(self):
@@ -102,6 +116,10 @@ class Rect:
 	def set(self, rect):
 		self.position.set(rect.position)
 		self.size.set(rect.size)
+		return self
+
+	def copy(self):
+		return Rect().set(self)
 
 	@property
 	def position(self):
@@ -134,6 +152,15 @@ class Rect:
 		self.size = Size(
 			max.x - self.position.x,
 			max.y - self.position.y)
+
+	def __add__(self, other):
+		if isinstance(other, Point):
+			return Rect(self.position + other, self.size)
+		else:
+			return other.__radd__(self)
+
+	def __radd__(self, other):
+		return self.__add__(other)
 
 	def __iter__(self):
 		# TODO: Yield (min, size) or (min, max)
