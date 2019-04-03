@@ -42,6 +42,12 @@ class Join(IntFlag):
 	Bevel = 3
 
 
+class Cap(IntFlag):
+	Butt = 1
+	Round = 2
+	Square = 3
+
+
 def _is_opaque(image):
 	assert image.mode in ("RGB", "RGBA")
 
@@ -303,63 +309,81 @@ class Image:
 				draw.line((x, y, x2, y2), fill=outline_color, width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
-	def _draw_polylines_join(self, draw, x, y, x2, y2, color, offset_p1, offset_p2, join):
-		if join == Join.Miter:
-			if x2 != x and y2 != y:
-				slope = (y2 - y) / (x2 - x)
-				intercept = y - (slope * x)
-				if x2 > x:
-					x2 = x2 + offset_p1 / 2
-				else:
-					x2 = x2 - offset_p1 / 2
-				y2 = slope * x2 + intercept
-			elif x2 == x:
-				if y2 > y:
-					y2 = y2 + offset_p2
-				else:
-					y2 = y2 - offset_p2
-			elif y2 == y:
-				if x2 > x:
-					x2 = x2 + offset_p2
-				else:
-					x2 = x2 - offset_p2
-		elif join == Join.Round:
-			draw.ellipse((x2 - offset_p1, y2 - offset_p1, x2 + offset_p2, y2 + offset_p2), fill=color)
-		elif join == Join.Bevel:
-			pass
-
+	def _create_miter_join_cap(self, x, y, x2, y2, offset):
+		if x2 != x and y2 != y:
+			slope = (y2 - y) / (x2 - x)
+			intercept = y - (slope * x)
+			if x2 > x:
+				x2 = x2 + offset / 2
+			else:
+				x2 = x2 - offset / 2
+			y2 = slope * x2 + intercept
+		elif x2 == x:
+			if y2 > y:
+				y2 = y2 + offset
+			else:
+				y2 = y2 - offset
+		elif y2 == y:
+			if x2 > x:
+				x2 = x2 + offset
+			else:
+				x2 = x2 - offset
 		return x2, y2
 
-	def _draw_polylines_helper(self, draw, points, color, outline_width, join):
-		if (outline_width % 2) == 0:
-			offset_p1 = (outline_width / 2) - 1
-			offset_p2 = (outline_width / 2)
-		else:
-			offset_p1 = offset_p2 = (outline_width - 1) / 2
+	def _draw_polylines_join(self, draw, x, y, x2, y2, color, offset, join):
+		if join == Join.Miter:
+			x2, y2 = self._create_miter_join_cap(x, y, x2, y2, offset)
+		elif join == Join.Round:
+			draw.ellipse((x2 - offset, y2 - offset, x2 + offset, y2 + offset), fill=color)
+		elif join == Join.Bevel:
+			pass
+		return x2, y2
+
+	def _draw_polylines_cap(self, draw, points, color, offset, cap, width):
+		points_size = len(points)
+		x, y = points[0].x, points[0].y
+		x2, y2 = points[points_size - 1].x, points[points_size - 1].y
+		if cap == Cap.Round:
+			draw.ellipse((x - offset, y - offset, x + offset, y + offset), fill=color)
+			draw.ellipse((x2 - offset, y2 - offset, x2 + offset, y2 + offset), fill=color)
+		elif cap == Cap.Square:
+			x1, y1 = points[1].x, points[1].y
+			cap_x, cap_y = self._create_miter_join_cap(x1, y1, x, y, offset)
+			draw.line((x, y, cap_x, cap_y), fill=color, width=int(width))
+			x3, y3 = points[points_size-2].x, points[points_size-2].y
+			cap_x2, cap_y2 = self._create_miter_join_cap(x3, y3, x2, y2, offset)
+			draw.line((x2, y2, cap_x2, cap_y2), fill=color, width=int(width))
+
+	def _draw_polylines_helper(self, draw, points, color, width, join, cap):
+		if (width % 2) == 0:
+			width = width + 1
+		offset = (width - 1) / 2
 		for i in range(1, len(points)):
 			x, y = points[i - 1].x, points[i - 1].y
 			x2, y2 = points[i].x, points[i].y
 			if i < len(points) - 1:
-				x2, y2 = self._draw_polylines_join(draw, x, y, x2, y2, color, offset_p1, offset_p2, join)
-			draw.line((x, y, x2, y2), fill=color, width=int(outline_width))
+				x2, y2 = self._draw_polylines_join(draw, x, y, x2, y2, color, offset, join)
+			draw.line((x, y, x2, y2), fill=color, width=int(width))
+		self._draw_polylines_cap(draw, points, color, offset, cap, width)
 
-	def draw_polylines(self, points, color=Color(0, 0, 0, 0), outline_width=1, join=Join.Miter):
+	def draw_polylines(self, points, color=Color(0, 0, 0, 0), width=1, join=Join.Miter, cap=Cap.Butt):
 		list_points = ()
 		for p in points:
 			assert isinstance(p, Point)
 			list_points += (p.x, p.y)
 		assert isinstance(color, Color)
 		assert isinstance(join, Join)
+		assert isinstance(cap, Cap)
 
 		color = tuple(map(int, color))
 
 		if color[3] == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			self._draw_polylines_helper(draw, points, color, outline_width, join)
+			self._draw_polylines_helper(draw, points, color, width, join, cap)
 		else:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			self._draw_polylines_helper(draw, points, color, outline_width, join)
+			self._draw_polylines_helper(draw, points, color, width, join, cap)
 			self._image = _Image.alpha_composite(self._image, image)
 
 

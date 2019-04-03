@@ -67,7 +67,7 @@ class Renderer:
 		self._render_children(polygon)
 
 	def _render_PolyLines(self, polylines):
-		self._image.draw_polylines(polylines.points, polylines.color, polylines.width, polylines.join)
+		self._image.draw_polylines(polylines.points, polylines.color, polylines.width, polylines.join, polylines.cap)
 		self._render_children(polylines)
 
 def _render(renderer, scene, time):

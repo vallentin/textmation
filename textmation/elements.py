@@ -7,7 +7,7 @@ from math import ceil
 from .descriptors import *
 from .properties import *
 from .animation import Animation
-from .rasterizer import Anchor, Alignment, Join
+from .rasterizer import Anchor, Alignment, Join, Cap
 from .utilities import setattr_consecutive
 
 
@@ -256,8 +256,9 @@ class PolyLines(Element):
 	color = TypedProperty(Color)
 	width = NonNegative()
 	join = TypedProperty(Join)
+	cap = TypedProperty(Cap)
 
-	def __init__(self, *points, color=None, width=1, join=Join.Miter):
+	def __init__(self, *points, color=None, width=1, join=Join.Miter, cap=Cap.Butt):
 		super().__init__()
 
 		if points is None:
@@ -267,6 +268,7 @@ class PolyLines(Element):
 
 		assert isinstance(color, Color)
 		assert isinstance(join, Join)
+		assert isinstance(cap, Cap)
 		for p in points:
 			assert isinstance(p, Point)
 
@@ -274,4 +276,5 @@ class PolyLines(Element):
 		self.color = color
 		self.width = width
 		self.join = join
+		self.cap = cap
 
