@@ -7,7 +7,7 @@ from math import ceil
 from .descriptors import *
 from .properties import *
 from .animation import Animation
-from .rasterizer import Anchor, Alignment
+from .rasterizer import Anchor, Alignment, Join
 from .utilities import setattr_consecutive
 
 
@@ -250,4 +250,28 @@ class Polygon(Element):
 		self.color = color
 		self.outline_color = outline_color
 		self.outline_width = outline_width
+
+
+class PolyLines(Element):
+	color = TypedProperty(Color)
+	width = NonNegative()
+	join = TypedProperty(Join)
+
+	def __init__(self, *points, color=None, width=1, join=Join.Miter):
+		super().__init__()
+
+		if points is None:
+			points = Point()
+		if color is None:
+			color = Color()
+
+		assert isinstance(color, Color)
+		assert isinstance(join, Join)
+		for p in points:
+			assert isinstance(p, Point)
+
+		self.points = points
+		self.color = color
+		self.width = width
+		self.join = join
 
