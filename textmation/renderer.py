@@ -8,12 +8,15 @@ from .elements import Element, Scene
 from .rasterizer import Image, Font
 
 
-def iter_frame_time(duration, frame_rate, *, inclusive=False):
+def calc_frame_count(duration, frame_rate, *, inclusive=False):
 	frames = duration * frame_rate
 	if inclusive:
 		frames += 1
+	return frames
 
-	for frame in range(frames):
+
+def iter_frame_time(duration, frame_rate, *, inclusive=False):
+	for frame in range(calc_frame_count(duration, frame_rate, inclusive=inclusive)):
 		time = frame / frame_rate
 		yield frame, time
 
@@ -81,20 +84,25 @@ class Renderer:
 
 
 def _render(renderer, scene, time):
-	scene.update(time)
+	scene.compute(time)
 	return renderer.render(scene)
 
 
 def render(scene, time=0):
+	scene.reset()
 	return _render(Renderer(), scene, time)
 
 
 def render_animation(scene, *, inclusive=True):
+	scene.reset()
+
 	renderer = Renderer()
+
+	frame_count = calc_frame_count(scene.duration, scene.frame_rate, inclusive=inclusive)
 
 	frames = []
 	for frame, time in iter_frame_time(scene.duration, scene.frame_rate, inclusive=inclusive):
-		print(f"Rendering Frame {frame:04d}")
+		print(f"\rRendering Frame {frame+1:04d}/{frame_count:04d} ({(frame+1)/frame_count*100:.0f}%)")
 		frames.append(_render(renderer, scene, time))
 
 	return frames

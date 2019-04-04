@@ -3,6 +3,29 @@
 
 from functools import wraps
 import time
+import os
+
+from textmation import *
+
+
+def render_example(scene):
+	scene.reset()
+
+	print(f"Rendering {calc_frame_count(scene.duration, scene.frame_rate, inclusive=True)} frames...")
+
+	frames = render_animation(scene, inclusive=True)
+
+	print("Exporting Frames...")
+
+	os.makedirs("output", exist_ok=True)
+
+	for i, frame in enumerate(frames, start=1):
+		filename = "output/frame_%04d.png" % i
+		frame.save(filename)
+
+	print("Exporting GIF...")
+
+	Image.save_gif("output.gif", frames, scene.frame_rate)
 
 
 def pretty_duration(seconds):
