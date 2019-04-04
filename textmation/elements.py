@@ -56,16 +56,20 @@ class Element:
 
 		if children is None:
 			children = ()
+
 		self.children = list(children)
 		self.parent = None
+
 		for child in self.children:
 			child.parent = self
-		self.animations = set()
+
+		self.animations = []
 
 	def add(self, element):
 		assert element is not None
 		if isinstance(element, Animation):
-			self.animations.add(element)
+			assert element not in self.animations
+			self.animations.append(element)
 		else:
 			assert isinstance(element, Element)
 			assert element.parent is None
@@ -87,7 +91,11 @@ class Element:
 
 	def apply_animation(self, animation, time):
 		value = animation.get_value(time)
-		setattr_consecutive(self, animation.property, value)
+
+		# TODO: setattr_consecutive(self, animation.property, value)
+		assert "." not in animation.property
+
+		self.add_computed(animation.property, value)
 
 	def update_animations(self, time):
 		for animation in self.animations:
@@ -105,6 +113,12 @@ class Element:
 
 	def get_computed(self, name):
 		return self.computed_properties[name]
+
+	def add_computed(self, name, value):
+		computed_property = self.get_computed(name)
+		current_value = computed_property.get()
+		current_value += value
+		computed_property.set(current_value)
 
 	def reset(self):
 		pass
