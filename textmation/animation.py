@@ -4,6 +4,7 @@
 from itertools import islice, repeat, starmap
 from functools import total_ordering
 import bisect
+from enum import IntEnum
 
 
 def normalize(value, lower, upper):
@@ -40,11 +41,20 @@ def lerp_value(a, b, t):
 		return type(a).lerp(a, b, t)
 
 
+class AnimationFillMode(IntEnum):
+	Never = 1
+	After = 2
+	Before = 3
+	Always = 4
+	Default = Never
+
+
 class Animation:
 	def __init__(self, property=None):
 		self.keyframes = []
 		self.property = property
 		self.delay = 0
+		self.fill_mode = AnimationFillMode.Default
 
 	@property
 	def begin_time(self):
