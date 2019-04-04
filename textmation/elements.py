@@ -105,7 +105,7 @@ class Element:
 		value = animation.get_value(time)
 
 		# TODO: setattr_consecutive(self, animation.property, value)
-		assert "." not in animation.property
+		# assert "." not in animation.property
 
 		self.add_computed(animation.property, value)
 
@@ -113,9 +113,9 @@ class Element:
 		for animation in self.animations:
 			self.apply_animation(animation, time)
 
-	def update(self, time):
-		for element in self.traverse():
-			element.update_animations(time)
+	# def update(self, time):
+	# 	for element in self.traverse():
+	# 		element.update_animations(time)
 
 	def get(self, name):
 		return self.properties[name]
@@ -133,41 +133,85 @@ class Element:
 		computed_property.set(current_value)
 
 	def reset(self):
-		pass
+		self.reset_children()
+
+	def reset_children(self):
+		for child in self.children:
+			child.reset()
 
 	def compute(self, time):
 		for name, value in self.properties.items():
-			self.computed_properties[name].set(value.get())
-		self.update(time)
+			self.get_computed(name).set(value.get())
+		self.update_animations(time)
+		self.compute_children(time)
+
+	def compute_children(self, time):
+		for child in self.children:
+			child.compute(time)
 
 
 class Scene(Element):
-	size = TypedProperty(Size)
-	background = TypedProperty(Color)
-	frame_rate = Positive()
+	# size = TypedProperty(Size)
+	# background = TypedProperty(Color)
+	# frame_rate = Positive()
 
 	def __init__(self, size=None, background=None):
 		super().__init__()
+
 		if size is None:
 			size = Size()
 		if background is None:
 			background = Color()
+
 		assert isinstance(size, Size)
 		assert isinstance(background, Color)
-		self.size = size
-		self.background = background
-		self.frame_rate = 20
-		self._duration = None
+
+		self.set("size", size)
+		self.set("background", background)
+		self.set("frame_rate", 20)
+		self.set("duration", None)
+
+	def reset(self):
+		super().reset()
+		self.update_duration()
+
+	def update_duration(self):
+		duration = self.get("duration").get()
+		if duration is None:
+			duration = ceil(max(map(attrgetter("end_time"), self.traverse_animations()), default=0))
+		self.set("duration", duration)
+
+	@property
+	def size(self):
+		return self.get("size").get()
+
+	@size.setter
+	def size(self, size):
+		self.set("size", size)
+
+	@property
+	def background(self):
+		return self.get("background").get()
+
+	@background.setter
+	def background(self, background):
+		self.set("background", background)
+
+	@property
+	def frame_rate(self):
+		return self.get("frame_rate").get()
+
+	@frame_rate.setter
+	def frame_rate(self, frame_rate):
+		self.set("frame_rate", frame_rate)
 
 	@property
 	def duration(self):
-		if self._duration is not None:
-			return self._duration
-		return ceil(max(map(attrgetter("end_time"), self.traverse_animations()), default=0))
+		return self.get("duration").get()
 
 	@duration.setter
 	def duration(self, duration):
-		self._duration = duration
+		self.set("duration", duration)
 
 
 class Group(Element):
@@ -183,10 +227,10 @@ class Group(Element):
 
 
 class Rectangle(Element):
-	bounds = TypedProperty(Rect)
-	color = TypedProperty(Color)
-	outline_color = TypedProperty(Color)
-	outline_width = NonNegative()
+	# bounds = TypedProperty(Rect)
+	# color = TypedProperty(Color)
+	# outline_color = TypedProperty(Color)
+	# outline_width = NonNegative()
 
 	def __init__(self, bounds=None, color=None, outline_color=None, outline_width=1):
 		super().__init__()
@@ -202,10 +246,52 @@ class Rectangle(Element):
 		assert isinstance(color, Color)
 		assert isinstance(outline_color, Color)
 
-		self.bounds = bounds
-		self.color = color
-		self.outline_color = outline_color
-		self.outline_width = outline_width
+		self.set("x", bounds.position.x)
+		self.set("y", bounds.position.y)
+		self.set("width", bounds.size.width)
+		self.set("height", bounds.size.height)
+
+		self.set("color.red", color.red)
+		self.set("color.green", color.green)
+		self.set("color.blue", color.blue)
+		self.set("color.alpha", color.alpha)
+
+		self.set("outline_color.red", outline_color.red)
+		self.set("outline_color.green", outline_color.green)
+		self.set("outline_color.blue", outline_color.blue)
+		self.set("outline_color.alpha", outline_color.alpha)
+
+		self.set("outline_width", outline_width)
+
+	@property
+	def bounds(self):
+		return Rect(
+			Point(
+				self.get_computed("x").get(),
+				self.get_computed("y").get()),
+			Size(
+				self.get_computed("width").get(),
+				self.get_computed("height").get()))
+
+	@property
+	def color(self):
+		return Color(
+			self.get_computed("color.red").get(),
+			self.get_computed("color.green").get(),
+			self.get_computed("color.blue").get(),
+			self.get_computed("color.alpha").get())
+
+	@property
+	def outline_color(self):
+		return Color(
+			self.get_computed("outline_color.red").get(),
+			self.get_computed("outline_color.green").get(),
+			self.get_computed("outline_color.blue").get(),
+			self.get_computed("outline_color.alpha").get())
+
+	@property
+	def outline_width(self):
+		return self.get_computed("outline_width").get()
 
 
 class Circle(Element):
