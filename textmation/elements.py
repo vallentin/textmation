@@ -11,8 +11,49 @@ from .rasterizer import Anchor, Alignment
 from .utilities import setattr_consecutive
 
 
+class ElementProperty:
+	def __init__(self, element, name, value=None):
+		self.element = element
+		self.name = name
+		self.value = value
+
+	def get(self):
+		return self.value
+
+	def set(self, value):
+		assert not isinstance(value, (ElementProperty, ElementProperties))
+		self.value = value
+		return self
+
+	def __repr__(self):
+		if self.value is None:
+			return f"{self.__class__.__name__}({self.element.__class__.__name__}, {self.name!r})"
+		else:
+			return f"{self.__class__.__name__}({self.element.__class__.__name__}, {self.name!r}, {self.value!r})"
+
+
+class ElementProperties:
+	def __init__(self, element):
+		self.element = element
+		self.properties = {}
+
+	def __getitem__(self, name):
+		try:
+			return self.properties[name]
+		except KeyError:
+			property = ElementProperty(self.element, name)
+			self.properties[name] = property
+			return property
+
+	def items(self):
+		return self.properties.items()
+
+
 class Element:
 	def __init__(self, children=None):
+		self.properties = ElementProperties(self)
+		self.computed_properties = ElementProperties(self)
+
 		if children is None:
 			children = ()
 		self.children = list(children)
@@ -55,6 +96,23 @@ class Element:
 	def update(self, time):
 		for element in self.traverse():
 			element.update_animations(time)
+
+	def get(self, name):
+		return self.properties[name]
+
+	def set(self, name, value):
+		return self.get(name).set(value)
+
+	def get_computed(self, name):
+		return self.computed_properties[name]
+
+	def reset(self):
+		pass
+
+	def compute(self, time):
+		for name, value in self.properties.items():
+			self.computed_properties[name].set(value.get())
+		self.update(time)
 
 
 class Scene(Element):
