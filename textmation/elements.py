@@ -6,7 +6,7 @@ from math import ceil
 
 from .descriptors import *
 from .properties import *
-from .animation import AnimationFillMode, Animation
+from .animation import AnimationFillMode, Infinite, Animation
 from .rasterizer import Anchor, Alignment
 from .utilities import setattr_consecutive
 
@@ -90,17 +90,8 @@ class Element:
 			yield from element.animations
 
 	def apply_animation(self, animation, time):
-		fill_mode = animation.fill_mode
-
-		if fill_mode == AnimationFillMode.Never:
-			if time < animation.begin_time or time > animation.end_time:
-				return
-		elif fill_mode == AnimationFillMode.After:
-			if time < animation.begin_time:
-				return
-		elif fill_mode == AnimationFillMode.Before:
-			if time > animation.end_time:
-				return
+		if not animation.is_affecting(time):
+			return
 
 		value = animation.get_value(time)
 

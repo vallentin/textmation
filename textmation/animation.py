@@ -21,6 +21,20 @@ def remap(value, lower1, upper1, lower2, upper2):
 	return lerp(lower2, upper2, normalize(value, lower1, upper1))
 
 
+def ping_pong(value, lower=0, upper=1):
+	length = upper - lower
+	length2 = length * 2
+	ping_ponged = value % length2
+
+	if ping_ponged < 0:
+		ping_ponged = -ping_ponged
+
+	if ping_ponged >= length:
+		return lower + length2 - ping_ponged
+	else:
+		return lower + ping_ponged
+
+
 def lerp_tuple(a, b, t):
 	try:
 		return lerp(a, b, t)
@@ -49,11 +63,24 @@ class AnimationFillMode(IntEnum):
 	Default = Never
 
 
+class AnimationDirection(IntEnum):
+	Normal = 1
+	Reverse = 2
+	Alternate = 3
+	AlternateReverse = 4
+	Default = Normal
+
+
+Infinite = object()
+
+
 class Animation:
 	def __init__(self, property=None):
 		self.keyframes = []
 		self.property = property
 		self.delay = 0
+		self.iterations = 1.0
+		self.direction = AnimationDirection.Default
 		self.fill_mode = AnimationFillMode.Default
 
 	@property
@@ -62,11 +89,20 @@ class Animation:
 
 	@property
 	def end_time(self):
-		return self.keyframes[-1].time + self.delay
+		if self.iterations is Infinite:
+			return self.begin_time
+		return self.begin_time + self.iteration_duration * self.iterations
 
 	@property
 	def duration(self):
 		return self.end_time - self.begin_time
+
+	@property
+	def iteration_duration(self):
+		first = self.keyframes[0].time
+		last  = self.keyframes[-1].time
+		duration = last - first
+		return duration
 
 	def add(self, keyframe):
 		# self.keyframes.append(keyframe)
@@ -97,7 +133,18 @@ class Animation:
 		assert False
 
 	def get_value(self, time):
-		time -= self.delay
+		time = max(time - self.delay, 0)
+
+		if self.iterations is not Infinite:
+			time = min(time, self.end_time)
+
+		if self.direction in (AnimationDirection.Normal, AnimationDirection.Reverse):
+			time %= self.iteration_duration
+		elif self.direction in (AnimationDirection.Alternate, AnimationDirection.AlternateReverse):
+			time = ping_pong(time, 0, self.iteration_duration)
+
+		if self.direction in (AnimationDirection.Reverse, AnimationDirection.AlternateReverse):
+			time = self.iteration_duration - time
 
 		before, after = self.get_between(time)
 		if before == after:
@@ -107,6 +154,22 @@ class Animation:
 
 		t = normalize(time, before.time, after.time)
 		return lerp_value(before.value, after.value, t)
+
+	def is_affecting(self, time):
+		if self.fill_mode == AnimationFillMode.Always:
+			return True
+
+		if self.iterations is Infinite:
+			return time >= self.begin_time
+
+		if self.fill_mode != AnimationFillMode.Never:
+			return self.begin_time <= time <= self.end_time
+		if self.fill_mode != AnimationFillMode.After:
+			return time >= self.begin_time
+		if self.fill_mode != AnimationFillMode.Before:
+			return time <= self.end_time
+
+		return False
 
 
 @total_ordering
