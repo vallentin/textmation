@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
+from io import StringIO
+import sys
 
 from .properties import Point
 from .elements import Element, Scene
@@ -100,9 +102,29 @@ def render_animation(scene, *, inclusive=True):
 
 	frame_count = calc_frame_count(scene.duration, scene.frame_rate, inclusive=inclusive)
 
+	add_newline = False
+
 	frames = []
 	for frame, time in iter_frame_time(scene.duration, scene.frame_rate, inclusive=inclusive):
-		print(f"\rRendering Frame {frame+1:04d}/{frame_count:04d} ({(frame+1)/frame_count*100:.0f}%)")
-		frames.append(_render(renderer, scene, time))
+		# print(f"\rRendering Frame {frame+1:04d}/{frame_count:04d} ({(frame+1)/frame_count*100:.0f}%)")
+
+		sys.stdout.write(f"\rRendering Frame {frame+1:04d}/{frame_count:04d} ({(frame+1)/frame_count*100:.0f}%)")
+		sys.stdout.flush()
+
+		f = StringIO()
+		try:
+			with redirect_stdout(f):
+				frames.append(_render(renderer, scene, time))
+		finally:
+			output = f.getvalue()
+			if output:
+				sys.stdout.write("\n")
+				sys.stdout.write(output)
+				sys.stdout.flush()
+			elif frame == (frame_count - 1):
+				add_newline = True
+
+	if add_newline:
+		sys.stdout.write("\n")
 
 	return frames
