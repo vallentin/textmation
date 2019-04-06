@@ -98,7 +98,10 @@ class Element:
 		# TODO: setattr_consecutive(self, animation.property, value)
 		# assert "." not in animation.property
 
-		self.add_computed(animation.property, value)
+		computed_property = self.get_computed(animation.property)
+		current_value = computed_property.get()
+		current_value = animation.composite_func(current_value, value)
+		computed_property.set(current_value)
 
 	def update_animations(self, time):
 		for animation in self.animations:
@@ -116,12 +119,6 @@ class Element:
 
 	def get_computed(self, name):
 		return self.computed_properties[name]
-
-	def add_computed(self, name, value):
-		computed_property = self.get_computed(name)
-		current_value = computed_property.get()
-		current_value += value
-		computed_property.set(current_value)
 
 	def reset(self):
 		self.reset_children()

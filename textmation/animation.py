@@ -4,7 +4,7 @@
 from itertools import islice, repeat, starmap
 from functools import total_ordering
 import bisect
-from enum import IntEnum
+from enum import Enum, IntEnum
 
 
 def normalize(value, lower, upper):
@@ -55,6 +55,12 @@ def lerp_value(a, b, t):
 		return type(a).lerp(a, b, t)
 
 
+class AnimationCompositeFunc(Enum):
+	Replace = lambda old, new: new
+	Add     = lambda old, new: old + new
+	Default = Replace
+
+
 class AnimationFillMode(IntEnum):
 	Never = 1
 	After = 2
@@ -82,6 +88,7 @@ class Animation:
 		self.iterations = 1.0
 		self.direction = AnimationDirection.Default
 		self.fill_mode = AnimationFillMode.Default
+		self.composite_func = AnimationCompositeFunc.Default
 
 	@property
 	def begin_time(self):
