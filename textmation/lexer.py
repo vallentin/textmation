@@ -19,7 +19,8 @@ class TokenType(IntEnum):
 	Dedent      = 4
 	Comment     = 5
 	Identifier  = 6
-	Integer     = 7
+	# Integer     = 7
+	Number      = 7
 	String      = 8
 	Symbol      = 9
 
@@ -223,12 +224,32 @@ class Lexer:
 		if c.isdigit():
 			span_begin = self.line, self.character
 			begin = self.ptr
+
 			while self.ptr < self.length:
 				if not self.string[self.ptr].isdigit():
 					break
 				self._next()
+
+			if self.ptr < self.length and self.string[self.ptr] == ".":
+				self._next()
+				while self.ptr < self.length:
+					if not self.string[self.ptr].isdigit():
+						break
+					self._next()
+
+			if self.ptr < self.length:
+				if self.string[self.ptr] == "%":
+					self._next()
+				else:
+					while self.ptr < self.length:
+						if self.string[self.ptr] not in _identifier:
+							break
+						self._next()
+
 			span_end = self.line, self.character
-			return Token(TokenType.Integer, self.string[begin:self.ptr], (span_begin, span_end))
+
+			return Token(TokenType.Number, self.string[begin:self.ptr], (span_begin, span_end))
+			# return Token(TokenType.Integer, self.string[begin:self.ptr], (span_begin, span_end))
 
 		if c in _identifier_start:
 			span_begin = self.line, self.character
