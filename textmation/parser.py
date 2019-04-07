@@ -7,7 +7,8 @@ import re
 from .lexer import Lexer, TokenType
 
 
-_units = "%", "px", "s", "ms"
+_keywords = "create", "as", "template", "inherit"
+_units    = "%", "px", "s", "ms"
 
 
 def pprint_tree(node, file=None, prefix="", last=True):
@@ -203,7 +204,7 @@ class Parser:
 
 		if span is not None:
 			begin, end = span
-			return ParserError("%s (%d:%d, %d:%d)" % (message, *begin, *end))
+			return ParserError("%s at %d:%d to %d:%d" % (message, *begin, *end))
 		else:
 			return ParserError(message)
 
@@ -218,14 +219,21 @@ class Parser:
 
 		if token.type != type:
 			begin, end = token.span
-			raise ParserError("Unexpected %s, expected %s (%d:%d, %d:%d)" % (token.type.name, type.name, *begin, *end))
+			raise ParserError("Unexpected %s, expected %s at %d:%d to %d:%d" % (token.type.name, type.name, *begin, *end))
 
 		if value is not None:
 			if token.value != value:
 				begin, end = token.span
-				raise ParserError("Unexpected %r, expected %r (%d:%d, %d:%d)" % (token.value, value, *begin, *end))
+				raise ParserError("Unexpected %r, expected %r at %d:%d to %d:%d" % (token.value, value, *begin, *end))
 
 		return token
+
+	def _next_name(self):
+		token = self._expect_token(TokenType.Identifier)
+		name = token.value
+		if name in _keywords:
+			self._fail(f"Unexpected keyword {name!r}", token=token)
+		return name
 
 	@contextmanager
 	def _indentation(self):
@@ -255,11 +263,11 @@ class Parser:
 	def _parse_create(self):
 		self._expect_token(TokenType.Identifier, "create")
 
-		element_type = self._expect_token(TokenType.Identifier).value
+		element_type = self._next_name()
 
 		name = None
 		if self._next_if(TokenType.Identifier, "as"):
-			name = self._expect_token(TokenType.Identifier).value
+			name = self._next_name()
 
 		create = Create(element_type, name)
 		create.extend(self._parse_body())
@@ -269,11 +277,11 @@ class Parser:
 	def _parse_template(self):
 		self._expect_token(TokenType.Identifier, "template")
 
-		name = self._expect_token(TokenType.Identifier).value
+		name = self._next_name()
 
 		inherit = None
 		if self._next_if(TokenType.Identifier, "inherit"):
-			inherit = self._expect_token(TokenType.Identifier).value
+			inherit = self._next_name()
 
 		template = Template(name, inherit)
 		template.extend(self._parse_body())
@@ -310,7 +318,7 @@ class Parser:
 		return Assign(name, value)
 
 	def _parse_lvalue(self):
-		name = self._expect_token(TokenType.Identifier).value
+		name = self._next().value
 		return Name(name)
 
 	def _parse_rvalue(self):
@@ -336,7 +344,7 @@ class Parser:
 
 	def _parse_value(self):
 		if self._peek_if(TokenType.Identifier):
-			return Name(self._next().value)
+			return Name(self._next_name())
 		elif self._peek_if(TokenType.Number):
 			token = self._next()
 			try:
