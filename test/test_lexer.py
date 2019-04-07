@@ -5,7 +5,7 @@ from itertools import zip_longest
 from textwrap import dedent
 from unittest import TestCase
 
-from lexer import Lexer, Token, TokenType, LexerError
+from textmation.lexer import Lexer, Token, TokenType, LexerError
 
 
 class LexerTest(TestCase):
