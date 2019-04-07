@@ -4,9 +4,16 @@
 import operator
 
 
+class CircularBindingError(Exception):
+	pass
+
+
 class Binding:
 	def get(self):
 		raise NotImplementedError
+
+	def traverse(self):
+		yield self
 
 	def __pos__(self):
 		return UnaryExpression(operator.pos, self)
@@ -68,6 +75,11 @@ class UnaryExpression(Binding):
 			operand = operand.get()
 		return self.op(operand)
 
+	def traverse(self):
+		yield self
+		if isinstance(self.operand, Binding):
+			yield from self.operand.traverse()
+
 
 class BinaryExpression(Binding):
 	def __init__(self, op, lhs, rhs):
@@ -82,6 +94,13 @@ class BinaryExpression(Binding):
 			rhs = rhs.get()
 		return self.op(lhs, rhs)
 
+	def traverse(self):
+		yield self
+		if isinstance(self.lhs, Binding):
+			yield from self.lhs.traverse()
+		if isinstance(self.rhs, Binding):
+			yield from self.rhs.traverse()
+
 
 class Property(Binding):
 	def __init__(self, value):
@@ -91,8 +110,19 @@ class Property(Binding):
 		return self.value
 
 	def set(self, value):
+		if isinstance(value, Binding):
+			path = {self}
+			for node in value.traverse():
+				if node in path:
+					raise CircularBindingError
+				path.add(node)
 		self.value = value
 		return self.value
+
+	def traverse(self):
+		yield self
+		if isinstance(self.value, Binding):
+			yield from self.value.traverse()
 
 
 if __name__ == "__main__":
@@ -112,3 +142,7 @@ if __name__ == "__main__":
 	print(height)
 	print(area)
 	print()
+
+	# Triggers CircularBindingError
+	# width.set(height * 2)
+	# height.set(width * 2)
