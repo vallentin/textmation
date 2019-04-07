@@ -7,6 +7,9 @@ import re
 from .lexer import Lexer, TokenType
 
 
+_units = "%", "px", "s", "ms"
+
+
 def pprint_tree(node, file=None, prefix="", last=True):
 	print(prefix, "`- " if last else "|- ", node, sep="", file=file)
 	prefix += "   " if last else "|  "
@@ -72,13 +75,17 @@ class Number(Node):
 	def __init__(self, value):
 		super().__init__()
 
-		m = re.match(r"^(\d+(?:\.\d+)?)(%|px|s|ms)?$", value)
+		m = re.match(r"^(\d+(?:\.\d+)?)(.+)?$", value)
 		if m is None:
 			raise ParserError(f"Invalid number format {value!r}")
 
 		self.string = value
 		self.raw_value, self.unit = m.groups()
 		self.value = float(self.raw_value) if "." in self.raw_value else int(self.raw_value)
+
+		if self.unit is not None:
+			if self.unit not in _units:
+				raise ParserError(f"Unexpected unit {self.unit!r}, expected any of {_units}")
 
 	def __repr__(self):
 		if self.unit is not None:
@@ -188,6 +195,20 @@ class Parser:
 
 	def _skip_newlines(self):
 		self._skip(TokenType.Newline, TokenType.Comment)
+
+	@staticmethod
+	def _create_error(message, *, span=None, token=None):
+		if span is None and token is not None:
+			span = token.span
+
+		if span is not None:
+			begin, end = span
+			return ParserError("%s (%d:%d, %d:%d)" % (message, *begin, *end))
+		else:
+			return ParserError(message)
+
+	def _fail(self, message, *, span=None, token=None):
+		raise self._create_error(message, span=span, token=token)
 
 	def _unexpected(self):
 		raise ParserError("Unexpected %s" % self._next())
@@ -317,7 +338,11 @@ class Parser:
 		if self._peek_if(TokenType.Identifier):
 			return Name(self._next().value)
 		elif self._peek_if(TokenType.Number):
-			return Number(self._next().value)
+			token = self._next()
+			try:
+				return Number(token.value)
+			except ParserError as ex:
+				raise self._create_error(str(ex), token=token) from None
 		elif self._peek_if(TokenType.String):
 			return String(self._next().value)
 		elif self._peek_if(TokenType.Symbol, "("):
