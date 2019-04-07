@@ -228,7 +228,7 @@ class Parser:
 
 	def _parse_scene(self):
 		scene = Create("Scene")
-		scene.extend(self._parse_body(allow_template=True))
+		scene.extend(self._parse_body_elements(allow_template=True))
 		return scene
 
 	def _parse_create(self):
@@ -241,11 +241,7 @@ class Parser:
 			name = self._expect_token(TokenType.Identifier).value
 
 		create = Create(element_type, name)
-
-		self._skip_newlines()
-		if self._peek_if(TokenType.Indent):
-			with self._indentation():
-				create.extend(self._parse_body())
+		create.extend(self._parse_body())
 
 		return create
 
@@ -259,15 +255,18 @@ class Parser:
 			inherit = self._expect_token(TokenType.Identifier).value
 
 		template = Template(name, inherit)
-
-		self._skip_newlines()
-		if self._peek_if(TokenType.Indent):
-			with self._indentation():
-				template.extend(self._parse_body())
+		template.extend(self._parse_body())
 
 		return template
 
 	def _parse_body(self, *, allow_template=False):
+		self._skip_newlines()
+		if self._peek_if(TokenType.Indent):
+			with self._indentation():
+				return self._parse_body_elements(allow_template=allow_template)
+		return []
+
+	def _parse_body_elements(self, *, allow_template=False):
 		body = []
 		while True:
 			self._skip_newlines()
