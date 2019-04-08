@@ -303,7 +303,7 @@ class Parser:
 				body.append(self._parse_create())
 			elif self._peek_if(TokenType.Identifier, "template"):
 				if not allow_template:
-					self._unexpected()
+					self._fail("Template not allowed", token=self._peek())
 				body.append(self._parse_template())
 			elif self._peek_if(TokenType.Identifier):
 				body.append(self._parse_assignment())
