@@ -39,6 +39,17 @@ class Interpreter:
 		yield
 		assert self._elements.pop() is element
 
+	@staticmethod
+	def _create_error(message, *, token=None):
+		if token is not None:
+			begin, end = token.span
+			return InterpreterError("%s at %d:%d to %d:%d" % (message, *begin, *end))
+		else:
+			return InterpreterError(message)
+
+	def _fail(self, message, *, token=None):
+		raise self._create_error(message, token=token)
+
 	def interpret(self, string):
 		if isinstance(string, str):
 			return self.interpret(parse(string))
@@ -68,7 +79,7 @@ class Interpreter:
 		try:
 			template = internal_templates[create.element]
 		except KeyError:
-			raise InterpreterError(f"Undefined {template_name!r} template") from None
+			raise self._create_error(f"Creating undefined {template_name!r} template", token=create.token) from None
 
 		element = template()
 
