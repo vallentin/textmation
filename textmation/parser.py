@@ -220,7 +220,10 @@ class Parser:
 
 		if token.type != type:
 			begin, end = token.span
-			raise ParserError("Unexpected %s, expected %s at %d:%d to %d:%d" % (token.type.name, type.name, *begin, *end))
+			if value is not None:
+				raise ParserError("Unexpected %r, expected %r at %d:%d to %d:%d" % (token.value, value, *begin, *end))
+			else:
+				raise ParserError("Unexpected %r, expected %s at %d:%d to %d:%d" % (token.value, type.name, *begin, *end))
 
 		if value is not None:
 			if token.value != value:
