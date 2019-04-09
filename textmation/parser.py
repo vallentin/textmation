@@ -21,10 +21,11 @@ def pprint_tree(node, file=None, prefix="", last=True):
 
 
 class Node:
-	def __init__(self, children=None):
+	def __init__(self, children=None, *, token=None):
 		if children is None:
 			children = []
 		self.children = children
+		self.token = token
 
 	def add(self, node):
 		self.children.append(node)
@@ -38,8 +39,8 @@ class Node:
 
 
 class Create(Node):
-	def __init__(self, element, name=None):
-		super().__init__()
+	def __init__(self, element, name=None, *, token=None):
+		super().__init__(token=token)
 		self.element = element
 		self.name = name
 
@@ -51,8 +52,8 @@ class Create(Node):
 
 
 class Template(Node):
-	def __init__(self, name, inherit):
-		super().__init__()
+	def __init__(self, name, inherit, *, token=None):
+		super().__init__(token=token)
 		self.name = name
 		self.inherit = inherit
 
@@ -64,8 +65,8 @@ class Template(Node):
 
 
 class Name(Node):
-	def __init__(self, name):
-		super().__init__()
+	def __init__(self, name, *, token=None):
+		super().__init__(token=token)
 		self.name = name
 
 	def __repr__(self):
@@ -73,8 +74,8 @@ class Name(Node):
 
 
 class Number(Node):
-	def __init__(self, value):
-		super().__init__()
+	def __init__(self, value, *, token=None):
+		super().__init__(token=token)
 
 		m = re.match(r"^(\d+(?:\.\d+)?)(.+)?$", value)
 		if m is None:
@@ -96,8 +97,8 @@ class Number(Node):
 
 
 class String(Node):
-	def __init__(self, string):
-		super().__init__()
+	def __init__(self, string, *, token=None):
+		super().__init__(token=token)
 		self.string = string
 
 	def __repr__(self):
@@ -105,8 +106,8 @@ class String(Node):
 
 
 class UnaryOp(Node):
-	def __init__(self, op, operand):
-		super().__init__([operand])
+	def __init__(self, op, operand, *, token=None):
+		super().__init__([operand], token=token)
 		self.op = op
 
 	@property
@@ -118,8 +119,8 @@ class UnaryOp(Node):
 
 
 class BinOp(Node):
-	def __init__(self, op, lhs, rhs):
-		super().__init__([lhs, rhs])
+	def __init__(self, op, lhs, rhs, *, token=None):
+		super().__init__([lhs, rhs], token=token)
 		self.op = op
 
 	@property
@@ -135,8 +136,8 @@ class BinOp(Node):
 
 
 class Assign(Node):
-	def __init__(self, name, value):
-		super().__init__([name, value])
+	def __init__(self, name, value, *, token=None):
+		super().__init__([name, value], token=token)
 
 	@property
 	def name(self):
@@ -263,13 +264,14 @@ class Parser:
 	def _parse_create(self):
 		self._expect_token(TokenType.Identifier, "create")
 
+		token = self._peek()
 		element_type = self._next_name()
 
 		name = None
 		if self._next_if(TokenType.Identifier, "as"):
 			name = self._next_name()
 
-		create = Create(element_type, name)
+		create = Create(element_type, name, token=token)
 		create.extend(self._parse_body())
 
 		return create
@@ -277,13 +279,14 @@ class Parser:
 	def _parse_template(self):
 		self._expect_token(TokenType.Identifier, "template")
 
+		token = self._peek()
 		name = self._next_name()
 
 		inherit = None
 		if self._next_if(TokenType.Identifier, "inherit"):
 			inherit = self._next_name()
 
-		template = Template(name, inherit)
+		template = Template(name, inherit, token=token)
 		template.extend(self._parse_body())
 
 		return template
@@ -313,13 +316,14 @@ class Parser:
 
 	def _parse_assignment(self):
 		name = self._parse_lvalue()
-		self._expect_token(TokenType.Symbol, "=")
+		token = self._expect_token(TokenType.Symbol, "=")
 		value = self._parse_rvalue()
-		return Assign(name, value)
+		return Assign(name, value, token=token)
 
 	def _parse_lvalue(self):
-		name = self._next().value
-		return Name(name)
+		token = self._peek()
+		name = self._next_name()
+		return Name(name, token=token)
 
 	def _parse_rvalue(self):
 		return self._parse_additive()
@@ -327,32 +331,37 @@ class Parser:
 	def _parse_additive(self):
 		result = self._parse_multiplicative()
 		while self._peek_if(TokenType.Symbol, ("+", "-")):
-			result = BinOp(self._next().value, result, self._parse_multiplicative())
+			token = self._next()
+			result = BinOp(token.value, result, self._parse_multiplicative(), token=token)
 		return result
 
 	def _parse_multiplicative(self):
 		result = self._parse_unary()
 		while self._peek_if(TokenType.Symbol, ("*", "/")):
-			result = BinOp(self._next().value, result, self._parse_unary())
+			token = self._next()
+			result = BinOp(token.value, result, self._parse_unary(), token=token)
 		return result
 
 	def _parse_unary(self):
 		if self._peek_if(TokenType.Symbol, ("-", "+")):
-			return UnaryOp(self._next().value, self._parse_unary())
+			token = self._next()
+			return UnaryOp(token.value, self._parse_unary(), token=token)
 		else:
 			return self._parse_value()
 
 	def _parse_value(self):
 		if self._peek_if(TokenType.Identifier):
-			return Name(self._next_name())
+			token = self._peek()
+			return Name(self._next_name(), token=token)
 		elif self._peek_if(TokenType.Number):
 			token = self._next()
 			try:
-				return Number(token.value)
+				return Number(token.value, token=token)
 			except ParserError as ex:
 				raise self._create_error(str(ex), token=token) from None
 		elif self._peek_if(TokenType.String):
-			return String(self._next().value)
+			token = self._next()
+			return String(token.value, token=token)
 		elif self._peek_if(TokenType.Symbol, "("):
 			self._expect_token(TokenType.Symbol, "(")
 			value = self._parse_rvalue()
