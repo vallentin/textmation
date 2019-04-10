@@ -51,6 +51,8 @@ class ElementProperties:
 
 class Element:
 	def __init__(self, children=None):
+		self.name = None
+
 		self.properties = ElementProperties(self)
 		self.computed_properties = ElementProperties(self)
 
@@ -64,6 +66,28 @@ class Element:
 			child.parent = self
 
 		self.animations = []
+
+	def apply(self, element):
+		if self.name is not None:
+			element.name = self.name
+		else:
+			element.name = self.__class__.__name__
+
+		for name, value in self.properties.items():
+			element.set(name, value.get())
+
+		for child in self.children:
+			element.add(child.copy())
+
+		for animation in self.animations:
+			element.add(animation)
+
+		return element
+
+	def copy(self):
+		element = Element()
+		self.apply(element)
+		return element
 
 	def add(self, element):
 		assert element is not None

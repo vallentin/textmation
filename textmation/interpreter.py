@@ -27,7 +27,26 @@ class InterpreterError(Exception):
 
 class Interpreter:
 	def __init__(self):
+		self.templates = None
 		self._elements = None
+
+	def _get_template(self, name, *, token=None):
+		try:
+			return self.templates[name]
+		except KeyError:
+			raise self._create_error(f"Creating undefined {name!r} template", token=token) from None
+
+	@staticmethod
+	def _apply_template(template, element):
+		if isclass(template):
+			assert issubclass(template, Element)
+			template = template()
+		assert isinstance(template, Element)
+		return template.apply(element)
+
+	@staticmethod
+	def _instantiate_template(template):
+		return Interpreter._apply_template(template, Element())
 
 	@property
 	def _element(self):
@@ -57,10 +76,12 @@ class Interpreter:
 			assert isinstance(string, parser.Create)
 			assert string.element == "Scene"
 
+			self.templates = dict(internal_templates)
 			self._elements = []
 
 			scene = self._interpret(string)
-			assert isinstance(scene, elements.Scene)
+			# assert isinstance(scene, elements.Scene)
+			assert isinstance(scene, elements.Scene) or scene.name == "Scene"
 
 			return scene
 
@@ -75,13 +96,8 @@ class Interpreter:
 			yield self._interpret(child)
 
 	def _interpret_Create(self, create):
-		template_name = create.element
-		try:
-			template = internal_templates[create.element]
-		except KeyError:
-			raise self._create_error(f"Creating undefined {template_name!r} template", token=create.token) from None
-
-		element = template()
+		template = self._get_template(create.element, token=create.token)
+		element = self._instantiate_template(template)
 
 		if create.name:
 			raise NotImplementedError
@@ -96,7 +112,26 @@ class Interpreter:
 		return element
 
 	def _interpret_Template(self, template):
-		raise NotImplementedError
+		element_template = Element()
+		element_template.name = template.name
+
+		if template.name in self.templates:
+			self._fail(f"Redeclaration of {template.name!r}", token=template.token)
+
+		if template.inherit is not None:
+			_template = self._get_template(template.inherit, token=template.token)
+			self._apply_template(_template, element_template)
+
+		with self._push_element(element_template):
+			for child in self._interpret_children(template):
+				if child is None:
+					continue
+				assert isinstance(child, Element)
+				element_template.add(child)
+
+		self.templates[template.name] = element_template
+
+		return None
 
 	def _interpret_BinOp(self, bin_op):
 		raise NotImplementedError
