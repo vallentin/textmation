@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .binding import Binding
 
-class Type:
+
+class Type(Binding):
 	@staticmethod
 	def check(value):
 		pass

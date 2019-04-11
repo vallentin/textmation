@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .binding import UnaryExpression, BinaryExpression
 from .datatypes import *
 
 
@@ -8,6 +9,7 @@ class ElementProperty:
 	def __init__(self, name, value, types, *, relative=None):
 		assert isinstance(name, str)
 		assert isinstance(types, tuple)
+		assert len(types) > 0
 		assert all(issubclass(type, Type) for type in types)
 		assert relative is None or isinstance(relative, ElementProperty)
 
@@ -15,13 +17,16 @@ class ElementProperty:
 		self.value = None
 		self.types = types
 		self.relative = relative
+
 		self.set(value)
 
 	def get(self):
 		return self.value
 
 	def set(self, value):
-		assert any(isinstance(value, type) for type in self.types)
+		# TODO: Check what the expression evaluates into
+		if not isinstance(value, (UnaryExpression, BinaryExpression)):
+			assert any(isinstance(value, type) for type in self.types)
 		self.value = value
 
 	def eval(self):

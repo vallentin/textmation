@@ -9,7 +9,7 @@ class CircularBindingError(Exception):
 
 
 class Binding:
-	def get(self):
+	def eval(self, property):
 		raise NotImplementedError
 
 	def traverse(self):
@@ -57,22 +57,15 @@ class Binding:
 	def __rmod__(self, other):
 		return BinaryExpression(operator.mod, other, self)
 
-	def __repr__(self):
-		# return f"<{self.__class__.__name__}: {self.get()!r}>"
-		return repr(self.get())
-
-	def __str__(self):
-		return str(self.get())
-
 
 class UnaryExpression(Binding):
 	def __init__(self, op, operand):
 		self.op, self.operand = op, operand
 
-	def get(self):
+	def eval(self, property):
 		operand = self.operand
 		if isinstance(operand, Binding):
-			operand = operand.get()
+			operand = operand.eval(property)
 		return self.op(operand)
 
 	def traverse(self):
@@ -85,13 +78,13 @@ class BinaryExpression(Binding):
 	def __init__(self, op, lhs, rhs):
 		self.op, self.lhs, self.rhs = op, lhs, rhs
 
-	def get(self):
+	def eval(self, property):
 		lhs = self.lhs
 		if isinstance(lhs, Binding):
-			lhs = lhs.get()
+			lhs = lhs.eval(property)
 		rhs = self.rhs
 		if isinstance(rhs, Binding):
-			rhs = rhs.get()
+			rhs = rhs.eval(property)
 		return self.op(lhs, rhs)
 
 	def traverse(self):
