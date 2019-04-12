@@ -42,7 +42,7 @@ class Rectangle(Template):
 	def apply(cls, element: Element):
 		super().apply(element)
 
-		element.define("x", Percentage(100), (Number, Percentage), relative=element.get("parent").eval().get("width"))
-		element.define("y", Percentage(100), (Number, Percentage), relative=element.get("parent").eval().get("height"))
-		element.define("width", Percentage(100), (Number, Percentage), relative=element.get("parent").eval().get("width"))
-		element.define("height", Percentage(100), (Number, Percentage), relative=element.get("parent").eval().get("height"))
+		element.define("x", 0, (Number, Percentage), relative="width")
+		element.define("y", 0, (Number, Percentage), relative="height")
+		element.define("width", Percentage(100), (Number, Percentage), relative="width")
+		element.define("height", Percentage(100), (Number, Percentage), relative="height")

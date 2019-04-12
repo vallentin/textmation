@@ -59,6 +59,9 @@ class Element(Type):
 		elif not isinstance(types, tuple):
 			types = types,
 
+		if isinstance(relative, str):
+			relative = self.get("parent").eval().get(relative)
+
 		property = ElementProperty(name, value, types, relative=relative)
 		self._properties[name] = property
 
