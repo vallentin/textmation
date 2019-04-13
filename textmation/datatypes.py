@@ -154,3 +154,56 @@ class String(Value):
 
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.string!r})"
+
+
+class Expression(Value):
+	def eval(self):
+		raise NotImplementedError
+
+
+class BinOp(Expression):
+	def __init__(self, op, lhs, rhs):
+		assert op in "+-*/"
+		self.op, self.lhs, self.rhs = op, lhs, rhs
+		self.type # Triggers type checking
+
+	def eval(self):
+		if self.op == "+":
+			return self.lhs.eval() + self.rhs.eval()
+		if self.op == "-":
+			return self.lhs.eval() - self.rhs.eval()
+		if self.op == "*":
+			return self.lhs.eval() * self.rhs.eval()
+		if self.op == "/":
+			return self.lhs.eval() / self.rhs.eval()
+
+	@property
+	def type(self):
+		if self.op == "+":
+			return self.lhs.type + self.rhs.type
+		if self.op == "-":
+			return self.lhs.type - self.rhs.type
+		if self.op == "*":
+			return self.lhs.type * self.rhs.type
+		if self.op == "/":
+			return self.lhs.type / self.rhs.type
+
+	def __repr__(self):
+		return f"{self.__class__.__name__}({self.op!r}, {self.lhs!r}, {self.rhs!r})"
+
+
+class UnaryOp(Expression):
+	def __init__(self, op, operand):
+		assert op == "-"
+		self.op, self.operand = op, operand
+		self.type # Triggers type checking
+
+	def eval(self):
+		return -self.operand.eval()
+
+	@property
+	def type(self):
+		return -self.operand.type
+
+	def __repr__(self):
+		return f"{self.__class__.__name__}({self.op!r}, {self.operand!r})"
