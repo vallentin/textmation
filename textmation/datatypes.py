@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from enum import Enum
+
+
 """
 from .binding import Binding
 
@@ -102,10 +105,7 @@ class Number(Value):
 			return Number(self.value * other.value)
 		return NotImplemented
 
-	def __rmul__(self, other):
-		if isinstance(other, Number):
-			return Number(other.value * self.value)
-		return NotImplemented
+	__rmul__ = __mul__
 
 	def __truediv__(self, other):
 		if isinstance(other, Number):
@@ -154,6 +154,94 @@ class String(Value):
 
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.string!r})"
+
+
+class _Time(Type):
+	def __add__(self, other):
+		if other is TimeType:
+			return TimeType
+		return NotImplemented
+
+	def __sub__(self, other):
+		if other is TimeType:
+			return TimeType
+		return NotImplemented
+
+	def __mul__(self, other):
+		if other is NumberType:
+			return TimeType
+		return NotImplemented
+
+	__rmul__ = __mul__
+
+	def __truediv__(self, other):
+		if other is NumberType:
+			return TimeType
+		return NotImplemented
+
+	def __neg__(self):
+		return TimeType
+
+
+TimeType = _Time()
+
+
+class TimeUnit(Enum):
+	Seconds = "s"
+	Milliseconds = "ms"
+
+
+class Time(Value):
+	type = TimeType
+
+	def __init__(self, duration, unit):
+		assert isinstance(duration, (int, float))
+		assert isinstance(unit, TimeUnit)
+		self.duration = duration
+		self.unit = unit
+
+	@property
+	def seconds(self):
+		if self.unit == TimeUnit.Seconds:
+			return self.duration
+		return self.milliseconds / 1000
+
+	@property
+	def milliseconds(self):
+		if self.unit == TimeUnit.Milliseconds:
+			return self.duration
+		return self.seconds * 1000
+
+	def __add__(self, other):
+		if isinstance(other, Time):
+			return Time(self.milliseconds + other.milliseconds, TimeUnit.Milliseconds)
+		return NotImplemented
+
+	def __sub__(self, other):
+		if isinstance(other, Time):
+			return Time(self.milliseconds - other.milliseconds, TimeUnit.Milliseconds)
+		return NotImplemented
+
+	def __mul__(self, other):
+		if isinstance(other, Number):
+			return Time(self.duration * other.value, self.unit)
+		return NotImplemented
+
+	__rmul__ = __mul__
+
+	def __truediv__(self, other):
+		if isinstance(other, Number):
+			return Time(self.duration / other.value, self.unit)
+		return NotImplemented
+
+	def __neg__(self):
+		return Time(-self.duration, self.unit)
+
+	def __str__(self):
+		return f"{self.duration}{self.unit.value}"
+
+	def __repr__(self):
+		return f"{self.__class__.__name__}({self.duration!r}, {self.unit})"
 
 
 class Expression(Value):
