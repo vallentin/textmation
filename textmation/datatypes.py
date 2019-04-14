@@ -60,6 +60,9 @@ class Value:
 	def eval(self):
 		return self
 
+	def apply(self, relative):
+		pass
+
 
 class _Number(Type):
 	def __add__(self, other):
@@ -435,22 +438,17 @@ class Expression(Value):
 	def eval(self):
 		raise NotImplementedError
 
+	def apply(self, relative):
+		raise NotImplementedError
+
 
 class BinOp(Expression):
 	def __init__(self, op, lhs, rhs):
 		assert op in "+-*/"
+		assert isinstance(lhs, Value)
+		assert isinstance(rhs, Value)
 		self.op, self.lhs, self.rhs = op, lhs, rhs
 		self.type # Triggers type checking
-
-	def eval(self):
-		if self.op == "+":
-			return self.lhs.eval() + self.rhs.eval()
-		if self.op == "-":
-			return self.lhs.eval() - self.rhs.eval()
-		if self.op == "*":
-			return self.lhs.eval() * self.rhs.eval()
-		if self.op == "/":
-			return self.lhs.eval() / self.rhs.eval()
 
 	@property
 	def type(self):
@@ -463,6 +461,20 @@ class BinOp(Expression):
 		if self.op == "/":
 			return self.lhs.type / self.rhs.type
 
+	def eval(self):
+		if self.op == "+":
+			return self.lhs.eval() + self.rhs.eval()
+		if self.op == "-":
+			return self.lhs.eval() - self.rhs.eval()
+		if self.op == "*":
+			return self.lhs.eval() * self.rhs.eval()
+		if self.op == "/":
+			return self.lhs.eval() / self.rhs.eval()
+
+	def apply(self, relative):
+		self.lhs.apply(relative)
+		self.rhs.apply(relative)
+
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.op!r}, {self.lhs!r}, {self.rhs!r})"
 
@@ -470,15 +482,19 @@ class BinOp(Expression):
 class UnaryOp(Expression):
 	def __init__(self, op, operand):
 		assert op == "-"
+		assert isinstance(operand, Value)
 		self.op, self.operand = op, operand
 		self.type # Triggers type checking
-
-	def eval(self):
-		return -self.operand.eval()
 
 	@property
 	def type(self):
 		return -self.operand.type
+
+	def eval(self):
+		return -self.operand.eval()
+
+	def apply(self, relative):
+		self.operand.apply(relative)
 
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.op!r}, {self.operand!r})"

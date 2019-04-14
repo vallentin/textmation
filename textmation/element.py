@@ -7,6 +7,21 @@ from operator import attrgetter
 from .datatypes import Type, Value, Number, String
 
 
+class Percentage(Number):
+	def __init__(self, value):
+		super().__init__(value)
+		self.relative = None
+
+	def eval(self):
+		assert isinstance(self.relative, ElementProperty)
+		# return BinOp("*", self.relative.eval(), BinOp("/", Number(self.value), Number(100))).eval()
+		return self.relative.eval() * (self / Number(100))
+
+	def apply(self, relative):
+		assert isinstance(relative, ElementProperty)
+		self.relative = relative
+
+
 class ElementProperty:
 	def __init__(self, name, value, types=None, *, relative=None):
 		assert isinstance(name, str)
@@ -51,6 +66,7 @@ class ElementProperty:
 			raise TypeError(f"Expected type of {type_names}, received {value.type.name}")
 
 		self.value = value
+		self.value.apply(self.relative)
 
 	def eval(self):
 		return self.value.eval()
