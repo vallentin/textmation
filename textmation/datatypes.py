@@ -42,14 +42,21 @@ class Percentage(Type):
 
 
 class Type:
+	@property
+	def name(self):
+		return self.__class__.__name__.strip("_")
+
 	def __repr__(self):
-		name = self.__class__.__name__.strip("_")
-		return f"<Type: {name}>"
+		return f"<Type: {self.name}>"
 
 	__str__ = __repr__
 
 
 class Value:
+	@property
+	def type(self):
+		raise NotImplementedError
+
 	def eval(self):
 		return self
 
