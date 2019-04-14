@@ -21,11 +21,11 @@ for name, cls in elements.__dict__.items():
 internal_templates["Rect"] = internal_templates["Rectangle"]
 
 
-class InterpreterError(Exception):
+class SceneBuilderError(Exception):
 	pass
 
 
-class Interpreter:
+class SceneBuilder:
 	def __init__(self):
 		self.templates = None
 		self._elements = None
@@ -46,7 +46,7 @@ class Interpreter:
 
 	@staticmethod
 	def _instantiate_template(template):
-		return Interpreter._apply_template(template, Element())
+		return SceneBuilder._apply_template(template, Element())
 
 	@property
 	def _element(self):
@@ -62,16 +62,16 @@ class Interpreter:
 	def _create_error(message, *, token=None):
 		if token is not None:
 			begin, end = token.span
-			return InterpreterError("%s at %d:%d to %d:%d" % (message, *begin, *end))
+			return SceneBuilderError("%s at %d:%d to %d:%d" % (message, *begin, *end))
 		else:
-			return InterpreterError(message)
+			return SceneBuilderError(message)
 
 	def _fail(self, message, *, token=None):
 		raise self._create_error(message, token=token)
 
-	def interpret(self, string):
+	def build(self, string):
 		if isinstance(string, str):
-			return self.interpret(parse(string))
+			return self.build(parse(string))
 		else:
 			assert isinstance(string, parser.Create)
 			assert string.element == "Scene"
@@ -79,23 +79,23 @@ class Interpreter:
 			self.templates = dict(internal_templates)
 			self._elements = []
 
-			scene = self._interpret(string)
+			scene = self._build(string)
 			# assert isinstance(scene, elements.Scene)
 			assert isinstance(scene, elements.Scene) or scene.name == "Scene"
 
 			return scene
 
-	def _interpret(self, node):
+	def _build(self, node):
 		assert isinstance(node, parser.Node)
-		method = "_interpret_%s" % node.__class__.__name__
+		method = "_build_%s" % node.__class__.__name__
 		visitor = getattr(self, method)
 		return visitor(node)
 
-	def _interpret_children(self, node):
+	def _build_children(self, node):
 		for child in node.children:
-			yield self._interpret(child)
+			yield self._build(child)
 
-	def _interpret_Create(self, create):
+	def _build_Create(self, create):
 		template = self._get_template(create.element, token=create.token)
 		element = self._instantiate_template(template)
 
@@ -103,7 +103,7 @@ class Interpreter:
 			raise NotImplementedError
 
 		with self._push_element(element):
-			for child in self._interpret_children(create):
+			for child in self._build_children(create):
 				if child is None:
 					continue
 				assert isinstance(child, Element)
@@ -111,7 +111,7 @@ class Interpreter:
 
 		return element
 
-	def _interpret_Template(self, template):
+	def _build_Template(self, template):
 		element_template = Element()
 		element_template.name = template.name
 
@@ -123,7 +123,7 @@ class Interpreter:
 			self._apply_template(_template, element_template)
 
 		with self._push_element(element_template):
-			for child in self._interpret_children(template):
+			for child in self._build_children(template):
 				if child is None:
 					continue
 				assert isinstance(child, Element)
@@ -133,25 +133,25 @@ class Interpreter:
 
 		return None
 
-	def _interpret_BinOp(self, bin_op):
+	def _build_BinOp(self, bin_op):
 		raise NotImplementedError
 
-	def _interpret_UnaryOp(self, unary_op):
+	def _build_UnaryOp(self, unary_op):
 		raise NotImplementedError
 
-	def _interpret_Assign(self, assign):
-		name, value = self._interpret_children(assign)
+	def _build_Assign(self, assign):
+		name, value = self._build_children(assign)
 		self._element.set(name, value)
 		return None
 
-	def _interpret_Name(self, name):
+	def _build_Name(self, name):
 		assert len(name.children) == 0
 		return name.name
 
-	def _interpret_Number(self, number):
+	def _build_Number(self, number):
 		assert len(number.children) == 0
 		return number
 
-	def _interpret_String(self, string):
+	def _build_String(self, string):
 		assert len(string.children) == 0
 		return string.string
