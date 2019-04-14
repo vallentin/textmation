@@ -81,6 +81,7 @@ class Number(Value):
 	type = NumberType
 
 	def __init__(self, value):
+		assert isinstance(value, (int, float))
 		self.value = value
 
 	def __add__(self, other):
@@ -141,6 +142,7 @@ class String(Value):
 	type = StringType
 
 	def __init__(self, string):
+		assert isinstance(string, str)
 		self.string = string
 
 	def __add__(self, other):
@@ -238,10 +240,188 @@ class Time(Value):
 		return Time(-self.duration, self.unit)
 
 	def __str__(self):
+		# TODO: pprint float
+		# TODO: https://stackoverflow.com/questions/2440692/formatting-floats-in-python-without-superfluous-zeros
 		return f"{self.duration}{self.unit.value}"
 
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.duration!r}, {self.unit})"
+
+
+class _Vec3(Type):
+	def __add__(self, other):
+		if other in (Vec3Type, NumberType):
+			return Vec3Type
+		return NotImplemented
+
+	__radd__ = __add__
+	__sub__ = __add__
+	__rsub__ = __add__
+	__mul__ = __add__
+	__rmul__ = __add__
+	__truediv__ = __add__
+	__rtruediv__ = __add__
+
+
+class _Vec4(Type):
+	def __add__(self, other):
+		if other in (Vec4Type, Vec3Type, NumberType):
+			return Vec4Type
+		return NotImplemented
+
+	__radd__ = __add__
+	__sub__ = __add__
+	__rsub__ = __add__
+	__mul__ = __add__
+	__rmul__ = __add__
+	__truediv__ = __add__
+	__rtruediv__ = __add__
+
+
+Vec3Type = _Vec3()
+Vec4Type = _Vec4()
+
+
+class Vec3(Value):
+	type = Vec3Type
+
+	def __init__(self, *xyz):
+		assert 0 <= len(xyz) <= 3
+		assert all(isinstance(x, (int, float)) for x in xyz)
+		if len(xyz) == 0:
+			self.x, self.y, self.z = 0, 0, 0
+		elif len(xyz) == 1:
+			x = xyz[0]
+			self.x, self.y, self.z = x, x, x
+		elif len(xyz) == 2:
+			self.x, self.y, self.z = *xyz, 0
+		elif len(xyz) == 3:
+			self.x, self.y, self.z = xyz
+
+	@property
+	def xyz(self):
+		return self.x, self.y, self.z
+
+	def __add__(self, other):
+		if isinstance(other, Vec3):
+			return Vec3(self.x + other.x, self.y + other.y, self.z + other.z)
+		if isinstance(other, Number):
+			return self + Vec3(other.value)
+		return NotImplemented
+
+	__radd__ = __add__
+
+	def __sub__(self, other):
+		if isinstance(other, Vec3):
+			return Vec3(self.x - other.x, self.y - other.y, self.z - other.z)
+		if isinstance(other, Number):
+			return self - Vec3(other.value)
+		return NotImplemented
+
+	def __rsub__(self, other):
+		if isinstance(other, Number):
+			return Vec3(other.value) - self
+		return NotImplemented
+
+	def __mul__(self, other):
+		if isinstance(other, Vec3):
+			return Vec3(self.x * other.x, self.y * other.y, self.z * other.z)
+		if isinstance(other, Number):
+			return self * Vec3(other.value)
+		return NotImplemented
+
+	__rmul__ = __mul__
+
+	def __truediv__(self, other):
+		if isinstance(other, Vec3):
+			return Vec3(self.x / other.x, self.y / other.y, self.z / other.z)
+		if isinstance(other, Number):
+			return self / Vec3(other.value)
+		return NotImplemented
+
+	def __rtruediv__(self, other):
+		if isinstance(other, Number):
+			return Vec3(other.value) / self
+		return NotImplemented
+
+	def __repr__(self):
+		return f"{self.__class__.__name__}({self.x}, {self.y}, {self.z})"
+
+
+class Vec4(Value):
+	type = Vec4Type
+
+	def __init__(self, *xyzw):
+		assert 0 <= len(xyzw) <= 4
+		assert all(isinstance(x, (int, float)) for x in xyzw)
+		if len(xyzw) == 0:
+			self.x, self.y, self.z, self.w = 0, 0, 0, 0
+		elif len(xyzw) == 1:
+			x = xyzw[0]
+			self.x, self.y, self.z, self.w = x, x, x, x
+		else:
+			self.x, self.y, self.z, self.w = xyzw + (0,) * (4 - len(xyzw))
+
+	@property
+	def xyzw(self):
+		return self.x, self.y, self.z, self.w
+
+	def __add__(self, other):
+		if isinstance(other, Vec4):
+			return Vec4(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
+		if isinstance(other, Vec3):
+			return self + Vec4(*other.xyz)
+		if isinstance(other, Number):
+			return self + Vec4(other.value)
+		return NotImplemented
+
+	__radd__ = __add__
+
+	def __sub__(self, other):
+		if isinstance(other, Vec4):
+			return Vec4(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
+		if isinstance(other, Vec3):
+			return self - Vec4(*other.xyz)
+		if isinstance(other, Number):
+			return self - Vec4(other.value)
+		return NotImplemented
+
+	def __rsub__(self, other):
+		if isinstance(other, Number):
+			return Vec4(other.value) - self
+		if isinstance(other, Vec3):
+			return Vec4(*other.xyz) - self
+		return NotImplemented
+
+	def __mul__(self, other):
+		if isinstance(other, Vec4):
+			return Vec4(self.x * other.x, self.y * other.y, self.z * other.z, self.w * other.w)
+		if isinstance(other, Vec3):
+			return self * Vec4(*other.xyz)
+		if isinstance(other, Number):
+			return self * Vec4(other.value)
+		return NotImplemented
+
+	__rmul__ = __mul__
+
+	def __truediv__(self, other):
+		if isinstance(other, Vec4):
+			return Vec4(self.x / other.x, self.y / other.y, self.z / other.z, self.w / other.w)
+		if isinstance(other, Vec3):
+			return self / Vec4(*other.xyz)
+		if isinstance(other, Number):
+			return self / Vec4(other.value)
+		return NotImplemented
+
+	def __rtruediv__(self, other):
+		if isinstance(other, Number):
+			return Vec4(other.value) / self
+		if isinstance(other, Vec3):
+			return Vec4(*other.xyz) / self
+		return NotImplemented
+
+	def __repr__(self):
+		return f"{self.__class__.__name__}({self.x}, {self.y}, {self.z}, {self.w})"
 
 
 class Expression(Value):
