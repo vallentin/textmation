@@ -498,3 +498,24 @@ class UnaryOp(Expression):
 
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.op!r}, {self.operand!r})"
+
+
+class Call(Expression):
+	def __init__(self, func, args=()):
+		self.func = func
+		self.args = tuple(args)
+		self.func.type_check(self.args)
+
+	@property
+	def type(self):
+		return self.func.return_type
+
+	def eval(self):
+		return self.func(*self.args)
+
+	def apply(self, relative):
+		for arg in self.args:
+			arg.apply(relative)
+
+	def __repr__(self):
+		return f"{self.__class__.__name__}({self.func.name!r}, {self.args!r})"

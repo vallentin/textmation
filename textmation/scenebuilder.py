@@ -4,9 +4,10 @@
 from contextlib import contextmanager, suppress
 
 from .parser import parse, _units, Node, Create
-from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp
+from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
 from .element import Element, Percentage
 from .templates import Template
+from .functions import functions
 
 
 class SceneBuilderError(Exception):
@@ -145,3 +146,7 @@ class SceneBuilder:
 	def _build_String(self, string):
 		assert len(string.children) == 0
 		return String(string.string)
+
+	def _build_Call(self, call):
+		args = tuple(self._build_children(call))
+		return Call(functions[call.name], args)
