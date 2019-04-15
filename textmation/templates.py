@@ -4,7 +4,7 @@
 from functools import wraps
 
 from .datatypes import *
-from .element import Element
+from .element import Element, Percentage
 
 
 def apply_template(f):
@@ -46,7 +46,11 @@ class Rectangle(Template):
 	def apply(cls, element: Element):
 		super().apply(element)
 
-		element.define("x", 0, (Number, Percentage), relative="width")
-		element.define("y", 0, (Number, Percentage), relative="height")
-		element.define("width", Percentage(100), (Number, Percentage), relative="width")
-		element.define("height", Percentage(100), (Number, Percentage), relative="height")
+		element.define("x", 0, relative="width")
+		element.define("y", 0, relative="height")
+		element.define("width", Percentage(100), relative="width")
+		element.define("height", Percentage(100), relative="height")
+
+		element.define("fill", Vec4(255, 255, 255), Vec4)
+		element.define("outline", Vec4(255, 255, 255), Vec4)
+		element.define("outline_width", 1)
