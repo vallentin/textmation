@@ -17,13 +17,17 @@ def apply_template(f):
 
 
 class Template:
+	@staticmethod
+	def list_templates():
+		return Template.__subclasses__()
+
 	@classmethod
 	@apply_template
 	def apply(cls, element: Element):
-		element.define("name", cls.__name__)
+		element.define("type", cls.__name__)
 
-		if element._parent is not None:
-			element.define("parent", element._parent)
+		# if element._parent is not None:
+		# 	element.define("parent", element._parent)
 
 
 class Scene(Template):

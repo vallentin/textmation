@@ -101,9 +101,8 @@ class Element:
 		return self._properties[name]
 
 	def set(self, name, value):
-		assert name in self._properties
-
-		self._properties[name].set(value)
+		assert isinstance(name, str)
+		self.get(name).set(value)
 
 	def has(self, name):
 		return name in self._properties
@@ -115,6 +114,13 @@ class Element:
 		element._parent = self
 		self._children.append(element)
 
+	@property
+	def type_name(self):
+		if self.has("type"):
+			name = self.get("type").eval()
+			assert isinstance(name, String)
+			return name.string
+		return self.__class__.__name__
+
 	def __repr__(self):
-		name = self.get('name').eval() if self.has("name") else self.__class__.__name__
-		return f"<{name}: 0x{id(self):X}>"
+		return f"<{self.type_name}: 0x{id(self):X}>"

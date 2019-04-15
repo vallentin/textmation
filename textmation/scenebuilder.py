@@ -1,24 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from contextlib import contextmanager
-from inspect import isclass
+from contextlib import contextmanager, suppress
 
-from . import elements
-from . import parser
-from .elements import Element
-from .parser import parse
-
-
-internal_templates = {}
-
-for name, cls in elements.__dict__.items():
-	if not isclass(cls):
-		continue
-	if issubclass(cls, Element) and cls is not Element:
-		internal_templates[name] = cls
-
-internal_templates["Rect"] = internal_templates["Rectangle"]
+from .parser import parse, _units, Node, Create
+from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp
+from .element import Element, Percentage
+from .templates import Template
 
 
 class SceneBuilderError(Exception):
@@ -29,24 +17,6 @@ class SceneBuilder:
 	def __init__(self):
 		self.templates = None
 		self._elements = None
-
-	def _get_template(self, name, *, token=None):
-		try:
-			return self.templates[name]
-		except KeyError:
-			raise self._create_error(f"Creating undefined {name!r} template", token=token) from None
-
-	@staticmethod
-	def _apply_template(template, element):
-		if isclass(template):
-			assert issubclass(template, Element)
-			template = template()
-		assert isinstance(template, Element)
-		return template.apply(element)
-
-	@staticmethod
-	def _instantiate_template(template):
-		return SceneBuilder._apply_template(template, Element())
 
 	@property
 	def _element(self):
@@ -73,20 +43,21 @@ class SceneBuilder:
 		if isinstance(string, str):
 			return self.build(parse(string))
 		else:
-			assert isinstance(string, parser.Create)
+			assert isinstance(string, Create)
 			assert string.element == "Scene"
 
-			self.templates = dict(internal_templates)
+			self.templates = dict((template.__name__, template) for template in Template.list_templates())
 			self._elements = []
 
 			scene = self._build(string)
-			# assert isinstance(scene, elements.Scene)
-			assert isinstance(scene, elements.Scene) or scene.name == "Scene"
+
+			assert isinstance(scene, Element)
+			assert scene.type_name == "Scene"
 
 			return scene
 
 	def _build(self, node):
-		assert isinstance(node, parser.Node)
+		assert isinstance(node, Node)
 		method = "_build_%s" % node.__class__.__name__
 		visitor = getattr(self, method)
 		return visitor(node)
@@ -96,62 +67,81 @@ class SceneBuilder:
 			yield self._build(child)
 
 	def _build_Create(self, create):
-		template = self._get_template(create.element, token=create.token)
-		element = self._instantiate_template(template)
+		template_name = create.element
+
+		try:
+			template = self.templates[create.element]
+		except KeyError:
+			raise self._create_error(f"Creating undefined {template_name!r} template", token=create.token) from None
+
+		element = Element()
 
 		if create.name:
 			raise NotImplementedError
 
+		parent = None
+		with suppress(IndexError):
+			parent = self._element
+
+		if parent is not None:
+			parent.add(element)
+
+		template.apply(element)
+
 		with self._push_element(element):
 			for child in self._build_children(create):
-				if child is None:
-					continue
-				assert isinstance(child, Element)
-				element.add(child)
+				pass
 
 		return element
 
 	def _build_Template(self, template):
-		element_template = Element()
-		element_template.name = template.name
-
-		if template.name in self.templates:
-			self._fail(f"Redeclaration of {template.name!r}", token=template.token)
-
-		if template.inherit is not None:
-			_template = self._get_template(template.inherit, token=template.token)
-			self._apply_template(_template, element_template)
-
-		with self._push_element(element_template):
-			for child in self._build_children(template):
-				if child is None:
-					continue
-				assert isinstance(child, Element)
-				element_template.add(child)
-
-		self.templates[template.name] = element_template
-
-		return None
-
-	def _build_BinOp(self, bin_op):
-		raise NotImplementedError
-
-	def _build_UnaryOp(self, unary_op):
 		raise NotImplementedError
 
 	def _build_Assign(self, assign):
 		name, value = self._build_children(assign)
-		self._element.set(name, value)
+
+		assert isinstance(name, str)
+		assert isinstance(value, Value)
+
+		try:
+			self._element.set(name, value)
+		except KeyError:
+			raise self._create_error(f"Assigning value to undefined property {name!r} in {self._element.type_name}", token=assign.token) from None
+		except TypeError as ex:
+			raise self._create_error(f"{ex} in {self._element.type_name}", token=assign.token) from None
+
 		return None
 
 	def _build_Name(self, name):
 		assert len(name.children) == 0
 		return name.name
 
+	def _build_UnaryOp(self, unary_op):
+		assert len(unary_op.children) == 1
+		operand, = self._build_children(unary_op)
+		return UnaryOp(unary_op.op, operand)
+
+	def _build_BinOp(self, bin_op):
+		assert len(bin_op.children) == 2
+		lhs, rhs = self._build_children(bin_op)
+		return BinOp(bin_op.op, lhs, rhs)
+
 	def _build_Number(self, number):
 		assert len(number.children) == 0
+
+		value, unit = number.value, number.unit
+
+		if unit is None:
+			return Number(value)
+		elif unit == "%":
+			return Percentage(value)
+		elif unit in (unit.value for unit in TimeUnit):
+			return Time(value, TimeUnit(unit))
+		else:
+			self._fail(f"Unexpected unit {unit!r}, expected any of {_units}", token=number.token)
+
 		return number
 
 	def _build_String(self, string):
 		assert len(string.children) == 0
-		return string.string
+		return String(string.string)
