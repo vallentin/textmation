@@ -22,12 +22,13 @@ def pprint_tree(node, file=None, prefix="", last=True):
 
 class Node:
 	def __init__(self, children=None, *, token=None):
-		if children is None:
-			children = []
-		self.children = children
+		self.children = []
 		self.token = token
+		if children is not None:
+			self.extend(children)
 
 	def add(self, node):
+		assert isinstance(node, Node)
 		self.children.append(node)
 
 	def extend(self, iterable):
@@ -146,6 +147,20 @@ class Assign(Node):
 	@property
 	def value(self):
 		return self.children[1]
+
+
+class Call(Node):
+	def __init__(self, name, args, *, token=None):
+		super().__init__(args, token=token)
+		assert isinstance(name, str)
+		self.name = name
+
+	@property
+	def args(self):
+		return self.children
+
+	def __repr__(self):
+		return f"<{self.__class__.__name__}: {self.name}>"
 
 
 class ParserError(Exception):
@@ -355,7 +370,27 @@ class Parser:
 	def _parse_value(self):
 		if self._peek_if(TokenType.Identifier):
 			token = self._peek()
-			return Name(self._next_name(), token=token)
+			name = Name(self._next_name(), token=token)
+
+			if self._next_if(TokenType.Symbol, "("):
+				args = []
+
+				self._skip_newlines()
+				if not self._next_if(TokenType.Symbol, ")"):
+					while True:
+						self._skip_newlines()
+						args.append(self._parse_rvalue())
+
+						self._skip_newlines()
+						if self._next_if(TokenType.Symbol, ")"):
+							break
+
+						self._skip_newlines()
+						self._expect_token(TokenType.Symbol, ",")
+
+				return Call(name.name, args)
+
+			return name
 		elif self._peek_if(TokenType.Number):
 			token = self._next()
 			try:
