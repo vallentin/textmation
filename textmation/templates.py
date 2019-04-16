@@ -5,6 +5,7 @@ from functools import wraps
 
 from .datatypes import *
 from .element import Element, Percentage
+from .utilities import iter_all_subclasses
 
 
 def apply_template(f):
@@ -19,7 +20,7 @@ def apply_template(f):
 class Template:
 	@staticmethod
 	def list_templates():
-		return Template.__subclasses__()
+		return list(iter_all_subclasses(Template))
 
 	@classmethod
 	@apply_template
@@ -39,8 +40,24 @@ class Scene(Template):
 		element.define("width", 100, Number)
 		element.define("height", 100, Number)
 
+		# TODO: alias size <-> width, height
 
-class Rectangle(Template):
+		element.define("background", Vec4(0, 0, 0, 255))
+		# TODO: alias background <-> fill
+
+		element.define("frame_rate", 20, Number)
+
+		# TODO: Calculate total duration by default
+		element.define("duration", 1, Number)
+
+		# TODO: Remove?
+		# TODO: element.define("frames", 1, Number)
+
+		# TODO: What should the default be?
+		element.define("inclusive", 1, Number)
+
+
+class Drawable(Template):
 	@classmethod
 	@apply_template
 	def apply(cls, element: Element):
@@ -51,6 +68,103 @@ class Rectangle(Template):
 		element.define("width", Percentage(100), relative="width")
 		element.define("height", Percentage(100), relative="height")
 
-		element.define("fill", Vec4(255, 255, 255), Vec4)
-		element.define("outline", Vec4(255, 255, 255), Vec4)
+
+class Rectangle(Drawable):
+	@classmethod
+	@apply_template
+	def apply(cls, element: Element):
+		super().apply(element)
+
+		element.define("color", Vec4(255, 255, 255, 255))
+		element.define("fill", element.get("color"))
+
+		element.define("outline", Vec4(0, 0, 0, 0), Vec4)
 		element.define("outline_width", 1)
+
+
+class Circle(Drawable):
+	@classmethod
+	@apply_template
+	def apply(cls, element: Element):
+		super().apply(element)
+
+		element.define("center_x", BinOp("+", Percentage(50), BinOp("/", element.get("width"), Number(2))), relative="width")
+		element.define("center_y", BinOp("+", Percentage(50), BinOp("/", element.get("height"), Number(2))), relative="height")
+
+		# TODO: Should radius be relative to width, height, min(width, height) or max(width, height)
+		# element.define("radius", Percentage(50), relative="width")
+		element.define("diameter", Percentage(100), relative="width")
+		element.define("radius", BinOp("/", element.get("diameter"), Number(2)), relative="width")
+
+		# element.set("x", BinOp("-", element.get("center_x"), element.get("radius")))
+		element.set("x", BinOp("-", element.get("center_x"), BinOp("/", element.get("width"), Number(2))))
+
+		# element.set("y", BinOp("-", element.get("center_y"), element.get("radius")))
+		element.set("y", BinOp("-", element.get("center_y"), BinOp("/", element.get("height"), Number(2))))
+
+		element.set("width", BinOp("*", element.get("radius"), Number(2)))
+		element.set("height", BinOp("*", element.get("radius"), Number(2)))
+
+		element.define("color", Vec4(255, 255, 255, 255))
+		element.define("fill", element.get("color"))
+
+		element.define("outline", Vec4(0, 0, 0, 0), Vec4)
+		element.define("outline_width", 1)
+
+
+class Ellipse(Drawable):
+	@classmethod
+	@apply_template
+	def apply(cls, element: Element):
+		super().apply(element)
+
+		element.define("center_x", BinOp("+", Percentage(50), BinOp("/", element.get("width"), Number(2))), relative="width")
+		element.define("center_y", BinOp("+", Percentage(50), BinOp("/", element.get("height"), Number(2))), relative="height")
+
+		# TODO: Should radius be relative to width, height, min(width, height) or max(width, height)
+		# element.define("radius", Percentage(50), relative="width")
+		element.define("diameter", Percentage(100), relative="width")
+		element.define("radius", BinOp("/", element.get("diameter"), Number(2)), relative="width")
+
+		element.define("diameter_x", element.get("diameter"), relative="width")
+		element.define("diameter_y", element.get("diameter"), relative="height")
+		element.define("radius_x", BinOp("/", element.get("diameter_x"), Number(2)), relative="width")
+		element.define("radius_y", BinOp("/", element.get("diameter_y"), Number(2)), relative="height")
+
+		# element.set("x", BinOp("-", element.get("center_x"), element.get("radius_x")))
+		element.set("x", BinOp("-", element.get("center_x"), BinOp("/", element.get("width"), Number(2))))
+
+		# element.set("y", BinOp("-", element.get("center_y"), element.get("radius_y")))
+		element.set("y", BinOp("-", element.get("center_y"), BinOp("/", element.get("height"), Number(2))))
+
+		element.set("width", BinOp("*", element.get("radius_x"), Number(2)))
+		element.set("height", BinOp("*", element.get("radius_y"), Number(2)))
+
+		element.define("color", Vec4(255, 255, 255, 255))
+		element.define("fill", element.get("color"))
+
+		element.define("outline", Vec4(0, 0, 0, 0), Vec4)
+		element.define("outline_width", 1)
+
+
+class Line(Drawable):
+	@classmethod
+	@apply_template
+	def apply(cls, element: Element):
+		super().apply(element)
+
+		element.define("x1", 0, relative="width")
+		element.define("y1", 0, relative="height")
+
+		element.define("x2", 0, relative="width")
+		element.define("y2", 0, relative="height")
+
+		element.set("x", element.get("x1"))
+		element.set("y", element.get("y1"))
+
+		element.define("color", Vec4(255, 255, 255, 255))
+		element.define("fill", element.get("color"))
+
+		# TODO: Intersects with Drawable's width
+		# element.define("width", 1)
+		element.set("width", 1)

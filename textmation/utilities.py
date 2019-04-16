@@ -22,3 +22,10 @@ def setattr_consecutive(obj, name, value):
 		obj = getattr_consecutive(obj, names)
 	assert hasattr(obj, name)
 	setattr(obj, name, value)
+
+
+def iter_all_subclasses(cls):
+	# Assumes no multiple inheritance
+	for cls in cls.__subclasses__():
+		yield cls
+		yield from iter_all_subclasses(cls)

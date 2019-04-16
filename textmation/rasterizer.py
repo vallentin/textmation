@@ -9,8 +9,8 @@ from PIL import Image as _Image
 from PIL import ImageDraw as _ImageDraw
 from PIL import ImageFont as _ImageFont
 
+from .datatypes import Vec2, Vec4, Color
 from .datatypes import Point, Size, Rect
-from .datatypes import Vec4, Color
 
 
 _fonts = {}
@@ -178,7 +178,7 @@ class Image:
 		self.draw_ellipse(center, radius, radius, fill, outline, outline_width)
 
 	def draw_ellipse(self, center, radius_x, radius_y, fill, outline=Color(0, 0, 0, 0), outline_width=1):
-		assert isinstance(center, Point)
+		assert isinstance(center, (Vec2, Point))
 		assert isinstance(fill, (Vec4, Color))
 		assert isinstance(outline, (Vec4, Color))
 
@@ -209,9 +209,9 @@ class Image:
 			self._image = _Image.alpha_composite(self._image, image)
 
 	def draw_line(self, p1, p2, fill, width=1):
-		assert isinstance(p1, Point)
-		assert isinstance(p2, Point)
-		assert isinstance(fill, Color)
+		assert isinstance(p1, (Vec2, Point))
+		assert isinstance(p2, (Vec2, Point))
+		assert isinstance(fill, (Vec4, Color))
 
 		if fill.a == 0:
 			return
