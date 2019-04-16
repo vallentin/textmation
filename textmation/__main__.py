@@ -9,7 +9,7 @@ from .parser import parse
 from .scenebuilder import SceneBuilder
 from .rasterizer import Image
 from .renderer import render_animation, calc_frame_count
-from .pretty import pprint_ast
+from .pretty import pprint_ast, pprint_element
 
 
 if __name__ == "__main__":
@@ -18,6 +18,7 @@ if __name__ == "__main__":
 	args_parser.add_argument("filename", help="Textmation file to process")
 	args_parser.add_argument("--save-frames", action="store_const", const=True, default=False)
 	args_parser.add_argument("--print-ast", action="store_const", const=True, default=False)
+	args_parser.add_argument("--print-scene", action="store_const", const=True, default=False)
 
 	args = args_parser.parse_args()
 
@@ -37,6 +38,9 @@ if __name__ == "__main__":
 
 	builder = SceneBuilder()
 	scene = builder.build(tree)
+
+	if args.print_scene:
+		pprint_element(scene)
 
 	print(f"Rendering {calc_frame_count(scene.p_duration, scene.p_frame_rate, inclusive=scene.p_inclusive)} frames...", flush=True)
 
