@@ -229,8 +229,8 @@ class Image:
 
 	def draw_text(self, text, position, fill, font, anchor=Anchor.Center, alignment=Alignment.Left):
 		assert isinstance(text, str)
-		assert isinstance(position, Point)
-		assert isinstance(fill, Color)
+		assert isinstance(position, (Vec2, Point))
+		assert isinstance(fill, (Vec4, Color))
 		assert isinstance(font, Font)
 		assert isinstance(alignment, Alignment)
 

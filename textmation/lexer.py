@@ -4,6 +4,7 @@
 from itertools import zip_longest
 import string
 from enum import IntEnum
+from ast import literal_eval
 
 
 _horizontal_whitespace = " \t"
@@ -275,7 +276,8 @@ class Lexer:
 				if c == "\n":
 					self._fail("Unexpected end of line while scanning string literal", (span_begin, (self.line, self.character)))
 			span_end = self.line, self.character
-			return Token(TokenType.String, self.string[begin:self.ptr], (span_begin, span_end))
+			# return Token(TokenType.String, self.string[begin:self.ptr], (span_begin, span_end))
+			return Token(TokenType.String, literal_eval(self.string[begin:self.ptr]), (span_begin, span_end))
 
 		if self.string[self.ptr] in "\r\n":
 			span_begin = self.line, self.character

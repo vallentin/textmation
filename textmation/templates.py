@@ -168,3 +168,22 @@ class Line(Drawable):
 		# TODO: Intersects with Drawable's width
 		# element.define("width", 1)
 		element.set("width", 1)
+
+
+class Text(Drawable):
+	@classmethod
+	@apply_template
+	def apply(cls, element: Element):
+		super().apply(element)
+
+		element.define("text", "")
+
+		element.define("font", "arial")
+		element.define("font_size", 32)
+
+		# TODO: Use enums and add type checking
+		element.define("anchor", "Center")
+		element.define("alignment", "Left")
+
+		element.define("color", Vec4(255, 255, 255, 255))
+		element.define("fill", element.get("color"))
