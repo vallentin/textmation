@@ -26,6 +26,32 @@ class ElementPropertyDefinedError(Exception):
 	pass
 
 
+class CircularReferenceError(Exception):
+	def __init__(self, message, paths):
+		super().__init__(message)
+		self.paths = paths
+
+
+def _iter_cycles(current, target, path):
+	for value in current.iter_values():
+		new_path = path + [value]
+		if value == target:
+			yield new_path
+		elif value in path:
+			continue
+		else:
+			yield from _iter_cycles(value, target, new_path)
+
+
+def find_cycles(value):
+	paths = []
+	for path in _iter_cycles(value, value, [value]):
+		path = tuple(node for node in path if isinstance(node, ElementProperty))
+		if path not in paths:
+			paths.append(path)
+	return paths
+
+
 class ElementProperty(Value):
 	def __init__(self, name, value, types=None, *, relative=None):
 		assert isinstance(name, str)
@@ -72,8 +98,15 @@ class ElementProperty(Value):
 		self.value = value
 		self.value.apply(self.relative)
 
+		paths = find_cycles(self)
+		if paths:
+			raise CircularReferenceError(f"Circular dependency encountered", paths)
+
 	def eval(self):
 		return self.value.eval()
+
+	def iter_values(self):
+		yield self.value
 
 	def __repr__(self):
 		return f"<{self.__class__.__name__}: {self.name!r}, {self.value!r}>"

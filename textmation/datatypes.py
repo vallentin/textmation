@@ -66,6 +66,10 @@ class Value:
 	def apply(self, relative):
 		pass
 
+	def iter_values(self):
+		return
+		yield
+
 
 class _Number(Type):
 	def __add__(self, other):
@@ -816,6 +820,10 @@ class BinOp(Expression):
 		self.lhs.apply(relative)
 		self.rhs.apply(relative)
 
+	def iter_values(self):
+		yield self.lhs
+		yield self.rhs
+
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.op!r}, {self.lhs!r}, {self.rhs!r})"
 
@@ -837,6 +845,9 @@ class UnaryOp(Expression):
 	def apply(self, relative):
 		self.operand.apply(relative)
 
+	def iter_values(self):
+		yield self.operand
+
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.op!r}, {self.operand!r})"
 
@@ -857,6 +868,10 @@ class Call(Expression):
 	def apply(self, relative):
 		for arg in self.args:
 			arg.apply(relative)
+
+	def iter_values(self):
+		for arg in self.args:
+			yield arg
 
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.func.name!r}, {self.args!r})"

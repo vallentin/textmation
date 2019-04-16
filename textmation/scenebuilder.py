@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from contextlib import contextmanager, suppress
+from operator import attrgetter
 
 from .parser import parse, _units, Node, Create, Name
 from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
-from .element import Element, Percentage, ElementPropertyDefinedError
+from .element import Element, Percentage, ElementPropertyDefinedError, CircularReferenceError
 from .templates import Template
 from .functions import functions
 
@@ -30,15 +31,20 @@ class SceneBuilder:
 		assert self._elements.pop() is element
 
 	@staticmethod
-	def _create_error(message, *, token=None):
+	def _create_error(message, *, after=None, token=None):
 		if token is not None:
 			begin, end = token.span
-			return SceneBuilderError("%s at %d:%d to %d:%d" % (message, *begin, *end))
+			if after:
+				return SceneBuilderError("%s at %d:%d to %d:%d\n%s" % (message, *begin, *end, after))
+			else:
+				return SceneBuilderError("%s at %d:%d to %d:%d" % (message, *begin, *end))
+		elif after:
+			return SceneBuilderError(f"{message}\n{after}")
 		else:
 			return SceneBuilderError(message)
 
-	def _fail(self, message, *, token=None):
-		raise self._create_error(message, token=token)
+	def _fail(self, message, *, after=None, token=None):
+		raise self._create_error(message, after=after, token=token)
 
 	def build(self, string):
 		if isinstance(string, str):
@@ -135,6 +141,9 @@ class SceneBuilder:
 			raise self._create_error(f"Assigning value to undefined property {name!r} in {self._element.type_name}", token=assign.token) from None
 		except TypeError as ex:
 			raise self._create_error(f"{ex} in {self._element.type_name}", token=assign.token) from None
+		except CircularReferenceError as ex:
+			paths = "\n".join(" -> ".join(map(attrgetter("name"), path)) for path in ex.paths)
+			raise self._create_error(f"{ex} in {self._element.type_name}", after=f"Paths:\n{paths}", token=assign.token) from None
 
 		return None
 
