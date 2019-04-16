@@ -127,6 +127,19 @@ class BinOp(Node):
 		return f"<{self.__class__.__name__}: {self.op!r}>"
 
 
+class Define(Node):
+	def __init__(self, name, value, *, token=None):
+		super().__init__([name, value], token=token)
+
+	@property
+	def name(self):
+		return self.children[0]
+
+	@property
+	def value(self):
+		return self.children[1]
+
+
 class Assign(Node):
 	def __init__(self, name, value, *, token=None):
 		super().__init__([name, value], token=token)
@@ -232,9 +245,15 @@ class Parser:
 				raise ParserError("Unexpected %r, expected %s at %d:%d to %d:%d" % (token.value, type.name, *begin, *end))
 
 		if value is not None:
-			if token.value != value:
-				begin, end = token.span
-				raise ParserError("Unexpected %r, expected %r at %d:%d to %d:%d" % (token.value, value, *begin, *end))
+			if isinstance(value, tuple):
+				if token.value not in value:
+					begin, end = token.span
+					value = " or ".join(map(repr, value))
+					raise ParserError("Unexpected %r, expected %s at %d:%d to %d:%d" % (token.value, value, *begin, *end))
+			else:
+				if token.value != value:
+					begin, end = token.span
+					raise ParserError("Unexpected %r, expected %r at %d:%d to %d:%d" % (token.value, value, *begin, *end))
 
 		return token
 
@@ -325,9 +344,12 @@ class Parser:
 
 	def _parse_assignment(self):
 		name = self._parse_lvalue()
-		token = self._expect_token(TokenType.Symbol, "=")
+		token = self._expect_token(TokenType.Symbol, ("=", ":="))
 		value = self._parse_rvalue()
-		return Assign(name, value, token=token)
+		if token.value == ":=":
+			return Define(name, value, token=token)
+		else:
+			return Assign(name, value, token=token)
 
 	def _parse_lvalue(self):
 		token = self._peek()

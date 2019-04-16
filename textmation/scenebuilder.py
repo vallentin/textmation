@@ -5,7 +5,7 @@ from contextlib import contextmanager, suppress
 
 from .parser import parse, _units, Node, Create, Name
 from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
-from .element import Element, Percentage
+from .element import Element, Percentage, ElementPropertyDefinedError
 from .templates import Template
 from .functions import functions
 
@@ -97,6 +97,25 @@ class SceneBuilder:
 
 	def _build_Template(self, template):
 		raise NotImplementedError
+
+	def _build_Define(self, define):
+		assert len(define.children) == 2
+
+		name = define.name
+		assert isinstance(name, Name)
+		name = name.name
+
+		value = self._build(define.value)
+
+		assert isinstance(name, str)
+		assert isinstance(value, Value)
+
+		try:
+			self._element.define(name, value)
+		except ElementPropertyDefinedError as ex:
+			raise self._create_error(f"{ex} in {self._element.type_name}", token=define.token) from None
+
+		return None
 
 	def _build_Assign(self, assign):
 		assert len(assign.children) == 2

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from itertools import zip_longest
+from contextlib import suppress
 import string
 from enum import IntEnum
 from ast import literal_eval
@@ -47,6 +48,10 @@ class Token:
 
 
 class LexerError(Exception):
+	pass
+
+
+class LexerUnexpectedEndError(LexerError):
 	pass
 
 
@@ -105,7 +110,7 @@ class Lexer:
 
 	def _next(self):
 		if self.ptr >= self.length:
-			raise LexerError("Unexpected end of stream")
+			raise LexerUnexpectedEndError("Unexpected end of stream")
 
 		c = self.string[self.ptr]
 		self.ptr += 1
@@ -117,6 +122,12 @@ class Lexer:
 			self.character += 1
 
 		return c
+
+	def _peek(self, offset=0):
+		with self.peeking():
+			for _ in range(offset):
+				self._next()
+			return self._next()
 
 	def next(self):
 		if self.dedents > 0:
@@ -302,7 +313,17 @@ class Lexer:
 				self._unexpected(c, self.brackets[-1], (span_begin, span_end))
 			self.brackets.pop()
 
-		return Token(TokenType.Symbol, c, (span_begin, span_end))
+		symbol = c
+
+		if c == ":":
+			with suppress(LexerUnexpectedEndError):
+				with self.peeking() as p:
+					if self._peek() == "=":
+						symbol += self._next()
+						span_end = self.line, self.character
+						p.save()
+
+		return Token(TokenType.Symbol, symbol, (span_begin, span_end))
 
 	def peek(self, offset=0):
 		with self.peeking():

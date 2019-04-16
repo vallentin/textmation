@@ -22,6 +22,10 @@ class Percentage(Number):
 		self.relative = relative
 
 
+class ElementPropertyDefinedError(Exception):
+	pass
+
+
 class ElementProperty(Value):
 	def __init__(self, name, value, types=None, *, relative=None):
 		assert isinstance(name, str)
@@ -82,13 +86,15 @@ class Element:
 		self._parent = None
 
 	def define(self, name, value, types=None, *, relative=None):
+		if name in self._properties:
+			raise ElementPropertyDefinedError(f"Property {name!r} is already defined")
+
 		if isinstance(value, (int, float)):
 			value = Number(value)
 		elif isinstance(value, str):
 			value = String(value)
 
 		assert isinstance(name, str)
-		assert name not in self._properties
 
 		if isinstance(relative, str):
 			assert self._parent is not None
