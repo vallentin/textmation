@@ -57,6 +57,9 @@ class Value:
 	def type(self):
 		raise NotImplementedError
 
+	def unbox(self):
+		return self
+
 	def eval(self):
 		return self
 
@@ -93,6 +96,9 @@ class Number(Value):
 	def __init__(self, value):
 		assert isinstance(value, (int, float))
 		self.value = value
+
+	def unbox(self):
+		return self.value
 
 	def __add__(self, other):
 		if isinstance(other, Number):
@@ -154,6 +160,9 @@ class String(Value):
 	def __init__(self, string):
 		assert isinstance(string, str)
 		self.string = string
+
+	def unbox(self):
+		return self.string
 
 	def __add__(self, other):
 		return String(self.string + str(other))
