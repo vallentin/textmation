@@ -122,6 +122,14 @@ class Element:
 		element._parent = self
 		self._children.append(element)
 
+	def reset(self):
+		# TODO
+		pass
+
+	def compute(self, time):
+		# TODO
+		pass
+
 	@property
 	def type_name(self):
 		if self.has("type"):

@@ -2,12 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from contextlib import contextmanager, redirect_stdout
+from functools import reduce
+import operator
 from io import StringIO
 import sys
 
-from .properties import Point
-from .elements import Element, Scene
+from .datatypes import Point, Size, Rect
 from .rasterizer import Image, Font
+from .rasterizer import Anchor, Alignment
+from .element import Element
 
 
 def calc_frame_count(duration, frame_rate, *, inclusive=False):
@@ -39,49 +42,71 @@ class Renderer:
 		self._translations.pop()
 
 	def render(self, element):
-		assert isinstance(element, Scene)
+		assert isinstance(element, Element)
+		assert element.type_name == "Scene"
 		image = self._render(element)
 		assert isinstance(image, Image)
 		return image
 
 	def _render(self, element):
 		assert isinstance(element, Element)
-		method = "_render_%s" % element.__class__.__name__
+		method = "_render_%s" % element.type_name
 		visitor = getattr(self, method)
 		return visitor(element)
 
 	def _render_children(self, element):
-		for child in element.children:
+		for child in element._children:
 			self._render(child)
 
 	def _render_Scene(self, scene):
-		self._image = Image.new(scene.size, scene.background)
+		self._image = Image.new(Size(scene.p_width, scene.p_height), scene.p_background)
 		self._render_children(scene)
 		return self._image
 
-	def _render_Group(self, group):
-		with self.translate(group.position):
-			self._render_children(group)
+	# def _render_Group(self, group):
+	# 	with self.translate(group.position):
+	# 		self._render_children(group)
 
 	def _render_Rectangle(self, rect):
-		self._image.draw_rect(self.translation + rect.bounds, rect.color, rect.outline_color, rect.outline_width)
-		self._render_children(rect)
+		bounds = Rect(rect.p_x, rect.p_y, rect.p_width, rect.p_height)
+		self._image.draw_rect(bounds + self.translation, rect.p_fill, rect.p_outline, rect.p_outline_width)
+
+		with self.translate(bounds.position):
+			self._render_children(rect)
 
 	def _render_Circle(self, circle):
-		self._image.draw_circle(self.translation + circle.center, circle.radius, circle.color, circle.outline_color, circle.outline_width)
+		center = Point(circle.p_center_x, circle.p_center_y)
+		self._image.draw_circle(self.translation + center, circle.p_radius, circle.p_fill, circle.p_outline, circle.p_outline_width)
+
+		# TODO: Translate to min or center?
 		self._render_children(circle)
 
 	def _render_Ellipse(self, ellipse):
-		self._image.draw_ellipse(self.translation + ellipse.center, ellipse.radius_x, ellipse.radius_y, ellipse.color, ellipse.outline_color, ellipse.outline_width)
+		center = Point(ellipse.p_center_x, ellipse.p_center_y)
+		self._image.draw_ellipse(self.translation + center, ellipse.p_radius_x, ellipse.p_radius_y, ellipse.p_color, ellipse.p_outline, ellipse.p_outline_width)
+
+		# TODO: Translate to min or center?
 		self._render_children(ellipse)
 
 	def _render_Line(self, line):
-		self._image.draw_line(self.translation + line.start_point, self.translation + line.end_point, line.color, line.width)
+		p1, p2 = Point(line.p_x1, line.p_y1), Point(line.p_x2, line.p_y2)
+
+		self._image.draw_line(self.translation + p1, self.translation + p2, line.p_fill, line.p_width)
+
+		# TODO: Translate to p1, p2, min(p1, p2) or at all?
 		self._render_children(line)
 
 	def _render_Text(self, text):
-		font = Font.load(text.font, text.font_size)
-		self._image.draw_text(text.text, self.translation + text.position, text.color, font, text.anchor, text.alignment)
+		font = Font.load(text.p_font, text.p_font_size)
+		position = Point(text.p_x, text.p_y)
+
+		# anchor = Anchor[text.p_anchor]
+		anchor = reduce(operator.ior, map(Anchor.__getitem__, map(str.strip, text.p_anchor.split("|"))))
+		alignment = Alignment[text.p_alignment]
+
+		self._image.draw_text(text.p_text, self.translation + position, text.p_fill, font, anchor, alignment)
+
+		# TODO: Translate?
 		self._render_children(text)
 
 
@@ -95,17 +120,21 @@ def render(scene, time=0):
 	return _render(Renderer(), scene, time)
 
 
+# TODO: Consider removing "inclusive" and instead use "scene.p_inclusive"
 def render_animation(scene, *, inclusive=True):
 	scene.reset()
 
 	renderer = Renderer()
 
-	frame_count = calc_frame_count(scene.duration, scene.frame_rate, inclusive=inclusive)
+	duration = scene.p_duration
+	frame_rate = scene.p_frame_rate
+
+	frame_count = calc_frame_count(duration, frame_rate, inclusive=inclusive)
 
 	add_newline = False
 
 	frames = []
-	for frame, time in iter_frame_time(scene.duration, scene.frame_rate, inclusive=inclusive):
+	for frame, time in iter_frame_time(duration, frame_rate, inclusive=inclusive):
 		# print(f"\rRendering Frame {frame+1:04d}/{frame_count:04d} ({(frame+1)/frame_count*100:.0f}%)")
 
 		sys.stdout.write(f"\rRendering Frame {frame+1:04d}/{frame_count:04d} ({(frame+1)/frame_count*100:.0f}%)")

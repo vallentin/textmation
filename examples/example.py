@@ -11,9 +11,9 @@ from textmation import *
 def render_example(scene):
 	scene.reset()
 
-	print(f"Rendering {calc_frame_count(scene.duration, scene.frame_rate, inclusive=True)} frames...")
+	print(f"Rendering {calc_frame_count(scene.p_duration, scene.p_frame_rate, inclusive=scene.p_inclusive)} frames...")
 
-	frames = render_animation(scene, inclusive=True)
+	frames = render_animation(scene, inclusive=scene.p_inclusive)
 
 	print("Exporting Frames...")
 
@@ -25,7 +25,7 @@ def render_example(scene):
 
 	print("Exporting GIF...")
 
-	Image.save_gif("output.gif", frames, scene.frame_rate)
+	Image.save_gif("output.gif", frames, scene.p_frame_rate)
 
 
 def pretty_duration(seconds):
