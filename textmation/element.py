@@ -107,6 +107,14 @@ class Element:
 	def has(self, name):
 		return name in self._properties
 
+	def eval(self, name):
+		return self.get(name).eval()
+
+	def __getattr__(self, name):
+		if name.startswith("p_"):
+			return self.eval(name[2:]).unbox()
+		return self.__getattribute__(name)
+
 	def add(self, element):
 		assert isinstance(element, Element)
 		assert element._parent is None
