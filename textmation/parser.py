@@ -11,15 +11,6 @@ _keywords = "create", "as", "template", "inherit"
 _units    = "%", "px", "s", "ms"
 
 
-def pprint_tree(node, file=None, prefix="", last=True):
-	print(prefix, "`- " if last else "|- ", node, sep="", file=file)
-	prefix += "   " if last else "|  "
-	child_count = len(node.children)
-	for i, child in enumerate(node.children):
-		last = i == (child_count - 1)
-		pprint_tree(child, file, prefix, last)
-
-
 class Node:
 	def __init__(self, children=None, *, token=None):
 		self.children = []

@@ -9,6 +9,7 @@ from .parser import parse
 from .scenebuilder import SceneBuilder
 from .rasterizer import Image
 from .renderer import render_animation, calc_frame_count
+from .pretty import pprint_ast
 
 
 if __name__ == "__main__":
@@ -16,6 +17,7 @@ if __name__ == "__main__":
 	args_parser.add_argument("-o", "--output", default="output.gif", help="Output filename")
 	args_parser.add_argument("filename", help="Textmation file to process")
 	args_parser.add_argument("--save-frames", action="store_const", const=True, default=False)
+	args_parser.add_argument("--print-ast", action="store_const", const=True, default=False)
 
 	args = args_parser.parse_args()
 
@@ -27,6 +29,9 @@ if __name__ == "__main__":
 	print("Parsing...", flush=True)
 
 	tree = parse(string)
+
+	if args.print_ast:
+		pprint_ast(tree)
 
 	print("Building Scene...", flush=True)
 
