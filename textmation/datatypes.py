@@ -344,6 +344,18 @@ class Vec2(Value):
 	def xy(self):
 		return self.x, self.y
 
+	@property
+	def r(self):
+		return self.x
+
+	@property
+	def g(self):
+		return self.y
+
+	@property
+	def rg(self):
+		return self.xy
+
 	def __add__(self, other):
 		if isinstance(other, Vec2):
 			return Vec2(self.x + other.x, self.y + other.y)
@@ -427,6 +439,22 @@ class Vec3(Value):
 	@property
 	def xyz(self):
 		return self.x, self.y, self.z
+
+	@property
+	def r(self):
+		return self.x
+
+	@property
+	def g(self):
+		return self.y
+
+	@property
+	def b(self):
+		return self.z
+
+	@property
+	def rgb(self):
+		return self.xyz
 
 	def __add__(self, other):
 		if isinstance(other, Vec3):
@@ -519,8 +547,36 @@ class Vec4(Value):
 			self.x, self.y, self.z, self.w = xyzw + (0,) * (4 - len(xyzw))
 
 	@property
+	def xyz(self):
+		return self.x, self.y, self.z
+
+	@property
 	def xyzw(self):
 		return self.x, self.y, self.z, self.w
+
+	@property
+	def r(self):
+		return self.x
+
+	@property
+	def g(self):
+		return self.y
+
+	@property
+	def b(self):
+		return self.z
+
+	@property
+	def a(self):
+		return self.w
+
+	@property
+	def rgb(self):
+		return self.xyz
+
+	@property
+	def rgba(self):
+		return self.xyzw
 
 	def __add__(self, other):
 		if isinstance(other, Vec4):
@@ -610,6 +666,16 @@ class Vec4(Value):
 		return f"{self.__class__.__name__}({self.x}, {self.y}, {self.z}, {self.w})"
 
 
+class Color(Vec4):
+	def __init__(self, r=0, g=None, b=None, a=255):
+		if b is None:
+			b = r if g is None else 0
+		if g is None:
+			g = r
+
+		super().__init__(r, g, b, a)
+
+
 class _Rect(Type):
 	def __add__(self, other):
 		if other in (Vec2Type, NumberType):
@@ -654,14 +720,16 @@ class Rect(Value):
 	type = RectType
 
 	def __init__(self, *rect):
-		assert 0 <= len(rect) <= 2
+		assert 0 <= len(rect) <= 2 or len(rect) == 4
 
 		if len(rect) == 0:
 			position, size = Point(), Size()
 		elif len(rect) == 1:
 			position, size = Point(), Size(*rect[0])
-		else: # elif len(rect) == 2:
+		elif len(rect) == 2:
 			position, size = Point(*rect[0]), Size(*rect[1])
+		else: # elif len(rect) == 4:
+			position, size = Point(rect[0], rect[1]), Size(rect[2], rect[3])
 
 		assert isinstance(position, Point)
 		assert isinstance(size, Size)

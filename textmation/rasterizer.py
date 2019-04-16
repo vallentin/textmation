@@ -9,7 +9,8 @@ from PIL import Image as _Image
 from PIL import ImageDraw as _ImageDraw
 from PIL import ImageFont as _ImageFont
 
-from .properties import Color, Point, Size, Rect
+from .datatypes import Point, Size, Rect
+from .datatypes import Vec4, Color
 
 
 _fonts = {}
@@ -51,9 +52,9 @@ def _is_opaque(image):
 
 class Image:
 	@staticmethod
-	def new(size, background=Color(0, 0, 0)):
+	def new(size, background=Color(0, 0, 0, 255)):
 		assert isinstance(size, Size) and size.area > 0
-		assert isinstance(background, Color)
+		assert isinstance(background, (Vec4, Color))
 		image = _Image.new("RGBA", tuple(size), tuple(background))
 		return Image(image)
 
@@ -138,12 +139,12 @@ class Image:
 		else:
 			self._image.paste(image._image, (x, y, x2, y2))
 
-	def draw_rect(self, bounds, color, outline_color=Color(0, 0, 0, 0), outline_width=1):
+	def draw_rect(self, bounds, fill, outline=Color(0, 0, 0, 0), outline_width=1):
 		assert isinstance(bounds, Rect)
-		assert isinstance(color, Color)
-		assert isinstance(outline_color, Color)
+		assert isinstance(fill, (Vec4, Color))
+		assert isinstance(outline, (Vec4, Color))
 
-		if color.alpha == 0 and outline_color.alpha == 0:
+		if fill.a == 0 and outline.a == 0:
 			return
 
 		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
@@ -152,88 +153,88 @@ class Image:
 		x2 -= 1
 		y2 -= 1
 
-		color = tuple(map(int, color))
-		outline_color = tuple(map(int, outline_color))
+		fill = tuple(map(int, fill))
+		outline = tuple(map(int, outline))
 
-		if color[3] == 255:
+		if fill[3] == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.rectangle((x, y, x2, y2), fill=color)
-		elif color[3] > 0:
+			draw.rectangle((x, y, x2, y2), fill=fill)
+		elif fill[3] > 0:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.rectangle((x, y, x2, y2), fill=color)
+			draw.rectangle((x, y, x2, y2), fill=fill)
 			self._image = _Image.alpha_composite(self._image, image)
 
-		if outline_color[3] == 255:
+		if outline[3] == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.rectangle((x, y, x2, y2), outline=outline_color, width=int(outline_width))
-		elif outline_color[3] > 0:
+			draw.rectangle((x, y, x2, y2), outline=outline, width=int(outline_width))
+		elif outline[3] > 0:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.rectangle((x, y, x2, y2), outline=outline_color, width=int(outline_width))
+			draw.rectangle((x, y, x2, y2), outline=outline, width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
-	def draw_circle(self, center, radius, color, outline_color=Color(0, 0, 0, 0), outline_width=1):
-		self.draw_ellipse(center, radius, radius, color, outline_color, outline_width)
+	def draw_circle(self, center, radius, fill, outline=Color(0, 0, 0, 0), outline_width=1):
+		self.draw_ellipse(center, radius, radius, fill, outline, outline_width)
 
-	def draw_ellipse(self, center, radius_x, radius_y, color, outline_color=Color(0, 0, 0, 0), outline_width=1):
+	def draw_ellipse(self, center, radius_x, radius_y, fill, outline=Color(0, 0, 0, 0), outline_width=1):
 		assert isinstance(center, Point)
-		assert isinstance(color, Color)
-		assert isinstance(outline_color, Color)
+		assert isinstance(fill, (Vec4, Color))
+		assert isinstance(outline, (Vec4, Color))
 
-		if color.alpha == 0 and outline_color.alpha == 0:
+		if fill.a == 0 and outline.a == 0:
 			return
 
 		x, y, x2, y2 = center.x - radius_x, center.y - radius_y, center.x + radius_x, center.y + radius_y
 
-		color = tuple(map(int, color))
-		outline_color = tuple(map(int, outline_color))
+		fill = tuple(map(int, fill))
+		outline = tuple(map(int, outline))
 
-		if color[3] == 255:
+		if fill[3] == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.ellipse((x, y, x2, y2), fill=color)
-		elif color[3] > 0:
+			draw.ellipse((x, y, x2, y2), fill=fill)
+		elif fill[3] > 0:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.ellipse((x, y, x2, y2), fill=color)
+			draw.ellipse((x, y, x2, y2), fill=fill)
 			self._image = _Image.alpha_composite(self._image, image)
 
-		if outline_color[3] == 255:
+		if outline[3] == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.ellipse((x, y, x2, y2), outline=outline_color, width=int(outline_width))
-		elif outline_color[3] > 0:
+			draw.ellipse((x, y, x2, y2), outline=outline, width=int(outline_width))
+		elif outline[3] > 0:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.ellipse((x, y, x2, y2), outline=outline_color, width=int(outline_width))
+			draw.ellipse((x, y, x2, y2), outline=outline, width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
-	def draw_line(self, p1, p2, color, width=1):
+	def draw_line(self, p1, p2, fill, width=1):
 		assert isinstance(p1, Point)
 		assert isinstance(p2, Point)
-		assert isinstance(color, Color)
+		assert isinstance(fill, Color)
 
-		if color.alpha == 0:
+		if fill.a == 0:
 			return
 
 		x, y, x2, y2 = p1.x, p1.y, p2.x, p2.y
 
-		if color.alpha == 255:
+		if fill.a == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.line((x, y, x2, y2), fill=tuple(map(int, color)), width=int(width))
+			draw.line((x, y, x2, y2), fill=tuple(map(int, fill)), width=int(width))
 		else:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.line((x, y, x2, y2), fill=tuple(map(int, color)), width=int(width))
+			draw.line((x, y, x2, y2), fill=tuple(map(int, fill)), width=int(width))
 			self._image = _Image.alpha_composite(self._image, image)
 
-	def draw_text(self, text, position, color, font, anchor=Anchor.Center, alignment=Alignment.Left):
+	def draw_text(self, text, position, fill, font, anchor=Anchor.Center, alignment=Alignment.Left):
 		assert isinstance(text, str)
 		assert isinstance(position, Point)
-		assert isinstance(color, Color)
+		assert isinstance(fill, Color)
 		assert isinstance(font, Font)
 		assert isinstance(alignment, Alignment)
 
-		if color.alpha == 0:
+		if fill.a == 0:
 			return
 
 		text_width, text_height = font.measure_text(text)
@@ -253,13 +254,13 @@ class Image:
 
 		position = x, y
 
-		if color.alpha == 255:
+		if fill.a == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
-			draw.text(position, text, fill=tuple(map(int, color)), font=font._font, align=alignment.value)
+			draw.text(position, text, fill=tuple(map(int, fill)), font=font._font, align=alignment.value)
 		else:
 			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
 			draw = _ImageDraw.Draw(image, "RGBA")
-			draw.text(position, text, fill=tuple(map(int, color)), font=font._font, align=alignment.value)
+			draw.text(position, text, fill=tuple(map(int, fill)), font=font._font, align=alignment.value)
 			self._image = _Image.alpha_composite(self._image, image)
 
 
