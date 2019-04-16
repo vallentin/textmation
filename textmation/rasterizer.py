@@ -208,6 +208,39 @@ class Image:
 			draw.ellipse((x, y, x2, y2), outline=outline, width=int(outline_width))
 			self._image = _Image.alpha_composite(self._image, image)
 
+	def draw_arc(self, center, radius_x, radius_y, fill, outline=Color(0, 0, 0, 0), outline_width=1, start_angle=0, end_angle=360):
+		assert isinstance(center, (Vec2, Point))
+		assert isinstance(fill, (Vec4, Color))
+		assert isinstance(outline, (Vec4, Color))
+		assert isinstance(start_angle, (int, float))
+		assert isinstance(end_angle, (int, float))
+
+		if fill.a == 0 and outline.a == 0:
+			return
+
+		x, y, x2, y2 = center.x - radius_x, center.y - radius_y, center.x + radius_x, center.y + radius_y
+
+		fill = tuple(map(int, fill))
+		outline = tuple(map(int, outline))
+
+		if fill[3] == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			draw.pieslice((x, y, x2, y2), start_angle, end_angle, fill=fill)
+		elif fill[3] > 0:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			draw.pieslice((x, y, x2, y2), start_angle, end_angle, fill=fill)
+			self._image = _Image.alpha_composite(self._image, image)
+
+		if outline[3] == 255:
+			draw = _ImageDraw.Draw(self._image, "RGBA")
+			draw.pieslice((x, y, x2, y2), start_angle, end_angle, outline=outline, width=int(outline_width))
+		elif outline[3] > 0:
+			image = _Image.new("RGBA", self._image.size, (0, 0, 0, 0))
+			draw = _ImageDraw.Draw(image, "RGBA")
+			draw.pieslice((x, y, x2, y2), start_angle, end_angle, outline=outline, width=int(outline_width))
+			self._image = _Image.alpha_composite(self._image, image)
+
 	def draw_line(self, p1, p2, fill, width=1):
 		assert isinstance(p1, (Vec2, Point))
 		assert isinstance(p2, (Vec2, Point))

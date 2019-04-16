@@ -107,6 +107,14 @@ class Ellipse(Drawable):
 		self.define("outline_width", 1)
 
 
+class Arc(Ellipse):
+	def on_ready(self):
+		super().on_ready()
+
+		self.define("start_angle", 0)
+		self.define("end_angle", 360)
+
+
 class Line(Drawable):
 	def on_ready(self):
 		super().on_ready()
