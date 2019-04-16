@@ -4,4 +4,7 @@
 __pycache__/
 *.pyc
 
+frames/
+output.gif
+
 fonts/
