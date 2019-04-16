@@ -3,7 +3,7 @@
 
 from contextlib import contextmanager, suppress
 
-from .parser import parse, _units, Node, Create
+from .parser import parse, _units, Node, Create, Name
 from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
 from .element import Element, Percentage
 from .templates import Template
@@ -99,7 +99,13 @@ class SceneBuilder:
 		raise NotImplementedError
 
 	def _build_Assign(self, assign):
-		name, value = self._build_children(assign)
+		assert len(assign.children) == 2
+
+		name = assign.name
+		assert isinstance(name, Name)
+		name = name.name
+
+		value = self._build(assign.value)
 
 		assert isinstance(name, str)
 		assert isinstance(value, Value)
@@ -112,10 +118,6 @@ class SceneBuilder:
 			raise self._create_error(f"{ex} in {self._element.type_name}", token=assign.token) from None
 
 		return None
-
-	def _build_Name(self, name):
-		assert len(name.children) == 0
-		return name.name
 
 	def _build_UnaryOp(self, unary_op):
 		assert len(unary_op.children) == 1
@@ -150,3 +152,14 @@ class SceneBuilder:
 	def _build_Call(self, call):
 		args = tuple(self._build_children(call))
 		return Call(functions[call.name], args)
+
+	def _build_Name(self, name):
+		assert len(name.children) == 0
+
+		_name = name.name
+
+		for element in reversed(self._elements):
+			with suppress(KeyError):
+				return element.get(_name)
+
+		self._fail(f"Undefined property {_name!r}", token=name.token)

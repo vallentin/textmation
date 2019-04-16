@@ -22,7 +22,7 @@ class Percentage(Number):
 		self.relative = relative
 
 
-class ElementProperty:
+class ElementProperty(Value):
 	def __init__(self, name, value, types=None, *, relative=None):
 		assert isinstance(name, str)
 		assert isinstance(value, Value)
