@@ -863,7 +863,7 @@ class Call(Expression):
 		return self.func.return_type
 
 	def eval(self):
-		return self.func(*self.args)
+		return self.func(*(arg.eval() for arg in self.args))
 
 	def apply(self, relative):
 		for arg in self.args:
