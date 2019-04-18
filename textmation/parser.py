@@ -8,6 +8,7 @@ from .lexer import Lexer, TokenType
 
 
 _keywords = "create", "as", "template", "inherit"
+_literals = "true", "false"
 _units    = "%", "px", "s", "ms"
 
 
@@ -150,6 +151,19 @@ class Assign(Node):
 
 	@property
 	def value(self):
+		return self.children[1]
+
+
+class MemberAccess(Node):
+	def __init__(self, value, member, *, token=None):
+		super().__init__([value, member], token=token)
+
+	@property
+	def value(self):
+		return self.children[0]
+
+	@property
+	def member(self):
 		return self.children[1]
 
 
@@ -354,6 +368,8 @@ class Parser:
 	def _parse_lvalue(self):
 		token = self._peek()
 		name = self._next_name()
+		if name in _literals:
+			self._fail(f"Unexpected literal {name!r}, expected {TokenType.Identifier.name}", token=token)
 		return Name(name, token=token)
 
 	def _parse_rvalue(self):
@@ -390,6 +406,9 @@ class Parser:
 			elif name.name == "false":
 				return Number(0)
 
+			if name in _literals:
+				self._fail(f"Unexpected literal {name!r}, expected {TokenType.Identifier.name}", token=token)
+
 			if self._next_if(TokenType.Symbol, "("):
 				args = []
 
@@ -407,6 +426,18 @@ class Parser:
 						self._expect_token(TokenType.Symbol, ",")
 
 				return Call(name.name, args)
+
+			while True:
+				token = self._peek()
+				if not self._next_if(TokenType.Symbol, "."):
+					break
+
+				next_name_token = self._peek()
+				next_name = self._next_name()
+				if next_name in _literals:
+					self._fail(f"Unexpected literal {next_name!r}, expected {TokenType.Identifier.name}", token=next_name_token)
+
+				name = MemberAccess(name, Name(next_name, token=next_name_token), token=token)
 
 			return name
 		elif self._peek_if(TokenType.Number):
