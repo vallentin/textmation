@@ -63,6 +63,10 @@ class Renderer:
 		self._render_children(scene)
 		return self._image
 
+	def _render_Drawable(self, drawable):
+		with self.translate(Point(drawable.p_x, drawable.p_y)):
+			self._render_children(drawable)
+
 	# def _render_Group(self, group):
 	# 	with self.translate(group.position):
 	# 		self._render_children(group)

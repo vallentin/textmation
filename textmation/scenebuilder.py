@@ -4,7 +4,7 @@
 from contextlib import contextmanager, suppress
 from operator import attrgetter
 
-from .parser import parse, _units, Node, Create, Name
+from .parser import parse, _units, Node, Create, Template as TemplateNode, Name
 from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
 from .element import Element, Percentage, ElementPropertyDefinedError, CircularReferenceError
 from .templates import Template
@@ -73,14 +73,26 @@ class SceneBuilder:
 		for child in node.children:
 			yield self._build(child)
 
+	def _apply_template(self, template, element, *, token=None):
+		if isinstance(template, str):
+			try:
+				template = self.templates[template]
+			except KeyError:
+				raise self._create_error(f"Creating undefined {template!r} template", token=token) from None
+
+		if isinstance(template, TemplateNode):
+			with self._push_element(element):
+				if template.inherit is not None:
+					self._apply_template(template.inherit, element, token=token)
+				else:
+					self._apply_template("Drawable", element, token=token)
+
+				for child in self._build_children(template):
+					pass
+		else:
+			template.apply(element)
+
 	def _build_Create(self, create):
-		template_name = create.element
-
-		try:
-			template = self.templates[create.element]
-		except KeyError:
-			raise self._create_error(f"Creating undefined {template_name!r} template", token=create.token) from None
-
 		element = Element()
 
 		if create.name:
@@ -93,7 +105,7 @@ class SceneBuilder:
 		if parent is not None:
 			parent.add(element)
 
-		template.apply(element)
+		self._apply_template(create.element, element, token=create.token)
 
 		with self._push_element(element):
 			for child in self._build_children(create):
@@ -102,7 +114,12 @@ class SceneBuilder:
 		return element
 
 	def _build_Template(self, template):
-		raise NotImplementedError
+		if template.name in self.templates:
+			self._fail(f"Redeclaration of {template.name!r}", token=template.token)
+
+		self.templates[template.name] = template
+
+		return None
 
 	def _build_Define(self, define):
 		assert len(define.children) == 2
