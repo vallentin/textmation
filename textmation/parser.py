@@ -385,6 +385,11 @@ class Parser:
 			token = self._peek()
 			name = Name(self._next_name(), token=token)
 
+			if name.name == "true":
+				return Number(1)
+			elif name.name == "false":
+				return Number(0)
+
 			if self._next_if(TokenType.Symbol, "("):
 				args = []
 
