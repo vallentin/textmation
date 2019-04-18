@@ -112,7 +112,16 @@ class ElementProperty(Value):
 		return f"<{self.__class__.__name__}: {self.name!r}, {self.value!r}>"
 
 
-class Element:
+class _Element(Type):
+	pass
+
+
+ElementType = _Element()
+
+
+class Element(Value):
+	type = ElementType
+
 	def __init__(self):
 		self._properties = {}
 		self._children = []
@@ -146,7 +155,9 @@ class Element:
 	def has(self, name):
 		return name in self._properties
 
-	def eval(self, name):
+	def eval(self, name=None):
+		if name is None:
+			return self
 		return self.get(name).eval()
 
 	def __getattr__(self, name):

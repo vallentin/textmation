@@ -27,8 +27,11 @@ class Template:
 	def apply(cls, element: Element):
 		element.define("type", cls.__name__)
 
-		# if element._parent is not None:
-		# 	element.define("parent", element._parent)
+		# TODO: Currently it's possible to do
+		# TODO: parent = parent.parent
+		# TODO: This will be resolved when readonly properties are added
+		if element._parent is not None:
+			element.define("parent", element._parent)
 
 
 class Scene(Template):

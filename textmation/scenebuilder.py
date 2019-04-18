@@ -30,6 +30,16 @@ class SceneBuilder:
 		yield
 		assert self._elements.pop() is element
 
+	def _get_property(self, element, name, *, token=None):
+		assert isinstance(element, Element)
+
+		while element is not None:
+			with suppress(KeyError):
+				return element.get(name)
+			element = element._parent
+
+		self._fail(f"Undefined property {name!r}", token=token)
+
 	@staticmethod
 	def _create_error(message, *, after=None, token=None):
 		if token is not None:
@@ -164,6 +174,17 @@ class SceneBuilder:
 
 		return None
 
+	def _build_MemberAccess(self, member_access):
+		value = self._build(member_access.value)
+		member = member_access.member
+
+		value = value.eval()
+
+		assert isinstance(value, Element)
+		assert isinstance(member, Name)
+
+		return self._get_property(value, member.name, token=member_access.token)
+
 	def _build_UnaryOp(self, unary_op):
 		assert len(unary_op.children) == 1
 		operand, = self._build_children(unary_op)
@@ -200,11 +221,4 @@ class SceneBuilder:
 
 	def _build_Name(self, name):
 		assert len(name.children) == 0
-
-		_name = name.name
-
-		for element in reversed(self._elements):
-			with suppress(KeyError):
-				return element.get(_name)
-
-		self._fail(f"Undefined property {_name!r}", token=name.token)
+		return self._get_property(self._element, name.name, token=name.token)
