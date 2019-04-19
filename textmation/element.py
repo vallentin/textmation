@@ -123,6 +123,7 @@ class Element(Value):
 	type = ElementType
 
 	def __init__(self):
+		self.template = None
 		self._properties = {}
 		self._children = []
 		self._parent = None
@@ -152,8 +153,8 @@ class Element(Value):
 		assert isinstance(name, str)
 		self.get(name).set(value)
 
-	def has(self, name):
-		return name in self._properties
+	# def has(self, name):
+	# 	return name in self._properties
 
 	def eval(self, name=None):
 		if name is None:
@@ -182,10 +183,10 @@ class Element(Value):
 
 	@property
 	def type_name(self):
-		if self.has("type"):
-			name = self.get("type").eval()
-			assert isinstance(name, String)
-			return name.string
+		if self.template is not None:
+			return self.template.__name__
+		# if self.has("type"):
+		# 	return self.get("type").eval().unbox()
 		return self.__class__.__name__
 
 	def __repr__(self):

@@ -23,6 +23,14 @@ class Template:
 		return list(iter_all_subclasses(Template))
 
 	@classmethod
+	def super(cls):
+		assert len(cls.__bases__) == 1
+		template = cls.__bases__[0]
+		if issubclass(template, Template):
+			return template
+		return None
+
+	@classmethod
 	@apply_template
 	def apply(cls, element: Element):
 		element.define("type", cls.__name__)

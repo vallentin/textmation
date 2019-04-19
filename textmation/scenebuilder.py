@@ -7,7 +7,7 @@ from operator import attrgetter
 from .parser import parse, _units, Node, Create, Template as TemplateNode, Name
 from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
 from .element import Element, Percentage, ElementPropertyDefinedError, CircularReferenceError
-from .templates import Template
+from .templates import Template, Scene
 from .functions import functions
 
 
@@ -68,8 +68,7 @@ class SceneBuilder:
 
 			scene = self._build(string)
 
-			assert isinstance(scene, Element)
-			assert scene.type_name == "Scene"
+			assert issubclass(scene.template, Scene)
 
 			return scene
 
@@ -100,6 +99,8 @@ class SceneBuilder:
 				for child in self._build_children(template):
 					pass
 		else:
+			assert element.template is None
+			element.template = template
 			template.apply(element)
 
 	def _build_Create(self, create):
