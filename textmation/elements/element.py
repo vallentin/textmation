@@ -138,7 +138,6 @@ class Element(Value):
 	def on_ready(self):
 		if self._parent is not None:
 			self.define("parent", self._parent)
-			self.define("index", self._parent._children.index(self))
 
 	def on_created(self):
 		pass

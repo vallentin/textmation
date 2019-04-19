@@ -5,9 +5,25 @@ from ..datatypes import *
 from .element import Element, Percentage
 
 
-class Drawable(Element):
+class BaseDrawable(Element):
+	def __init__(self):
+		super().__init__()
+		self.elements = []
+
+	def add(self, element):
+		super().add(element)
+
+		if isinstance(element, Drawable):
+			self.elements.append(element)
+		else:
+			raise NotImplementedError
+
+
+class Drawable(BaseDrawable):
 	def on_ready(self):
 		super().on_ready()
+
+		self.define("index", self._parent._children.index(self))
 
 		self.define("x", 0, relative="width")
 		self.define("y", 0, relative="height")

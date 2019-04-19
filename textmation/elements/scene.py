@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from ..datatypes import *
-from .element import Element
+from .drawables import BaseDrawable
 
 
-class Scene(Element):
+class Scene(BaseDrawable):
 	def on_ready(self):
 		super().on_ready()
 

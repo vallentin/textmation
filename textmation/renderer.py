@@ -55,7 +55,7 @@ class Renderer:
 		return visitor(element)
 
 	def _render_children(self, element):
-		for child in element._children:
+		for child in element.elements:
 			self._render(child)
 
 	def _render_Scene(self, scene):
