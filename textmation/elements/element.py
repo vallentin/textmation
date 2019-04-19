@@ -128,22 +128,22 @@ class Element(Value):
 	type = ElementType
 
 	def __init__(self):
-		self._properties = {}
-		self._children = []
-		self._parent = None
+		self.properties = {}
+		self.children = []
+		self.parent = None
 
 	def on_init(self):
 		pass
 
 	def on_ready(self):
-		if self._parent is not None:
-			self.define("parent", self._parent)
+		if self.parent is not None:
+			self.define("parent", self.parent)
 
 	def on_created(self):
 		pass
 
 	def define(self, name, value, types=None, *, relative=None):
-		if name in self._properties:
+		if name in self.properties:
 			raise ElementPropertyDefinedError(f"Property {name!r} is already defined")
 
 		if isinstance(value, (int, float)):
@@ -154,21 +154,20 @@ class Element(Value):
 		assert isinstance(name, str)
 
 		if isinstance(relative, str):
-			assert self._parent is not None
-			relative = self._parent.get(relative)
+			assert self.parent is not None
+			relative = self.parent.get(relative)
 
-		property = ElementProperty(name, value, types, relative=relative)
-		self._properties[name] = property
+		self.properties[name] = ElementProperty(name, value, types, relative=relative)
 
 	def get(self, name):
-		return self._properties[name]
+		return self.properties[name]
 
 	def set(self, name, value):
 		assert isinstance(name, str)
 		self.get(name).set(value)
 
 	# def has(self, name):
-	# 	return name in self._properties
+	# 	return name in self.properties
 
 	def eval(self, name=None):
 		if name is None:
@@ -182,10 +181,10 @@ class Element(Value):
 
 	def add(self, element):
 		assert isinstance(element, Element)
-		assert element._parent is None
+		assert element.parent is None
 
-		element._parent = self
-		self._children.append(element)
+		element.parent = self
+		self.children.append(element)
 
 	def reset(self):
 		# TODO

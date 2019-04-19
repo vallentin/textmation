@@ -64,7 +64,7 @@ class SceneBuilder:
 		while element is not None:
 			with suppress(KeyError):
 				return element.get(name)
-			element = element._parent
+			element = element.parent
 
 		self._fail(f"Undefined property {name!r}", token=token)
 

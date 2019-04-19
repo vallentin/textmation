@@ -42,12 +42,12 @@ def pprint_ast(node, file=None):
 
 def pprint_element_properties(element, file=None):
 	max_name_length = 0
-	for name, property in element._properties.items():
+	for name, property in element.properties.items():
 		types = " | ".join(map(attrgetter("name"), property.types))
 		name = f"{name}: {types}"
 		max_name_length = max(max_name_length, len(name))
 
-	for name, property in element._properties.items():
+	for name, property in element.properties.items():
 		types = " | ".join(map(attrgetter("name"), property.types))
 		name = f"{name}: {types}".ljust(max_name_length)
 		value = property.eval().unbox()
@@ -63,4 +63,4 @@ def _stringify_element(element):
 
 
 def pprint_element(element, file=None):
-	pprint_tree_multiline(element, _stringify_element, attrgetter("_children"), file=file)
+	pprint_tree_multiline(element, _stringify_element, file=file)
