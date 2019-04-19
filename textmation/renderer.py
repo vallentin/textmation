@@ -10,7 +10,7 @@ import sys
 from .datatypes import Point, Size, Rect
 from .rasterizer import Image, Font
 from .rasterizer import Anchor, Alignment
-from .element import Element
+from .elements import Element
 from .templates import Scene
 
 

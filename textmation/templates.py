@@ -4,7 +4,7 @@
 from functools import wraps
 
 from .datatypes import *
-from .element import Element, Percentage
+from .elements import Element, Percentage
 from .utilities import iter_all_subclasses
 
 

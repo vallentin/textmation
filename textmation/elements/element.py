@@ -4,7 +4,7 @@
 from contextlib import contextmanager
 from operator import attrgetter
 
-from .datatypes import Type, Value, Number, String
+from ..datatypes import Type, Value, Number, String
 
 
 class Percentage(Number):

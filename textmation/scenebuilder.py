@@ -6,7 +6,7 @@ from operator import attrgetter
 
 from .parser import parse, _units, Node, Create, Template as TemplateNode, Name
 from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
-from .element import Element, Percentage, ElementPropertyDefinedError, CircularReferenceError
+from .elements import Element, Percentage, ElementPropertyDefinedError, CircularReferenceError
 from .templates import Template, Scene
 from .functions import functions
 
