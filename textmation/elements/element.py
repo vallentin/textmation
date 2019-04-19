@@ -140,6 +140,9 @@ class Element(Value):
 			self.define("parent", self._parent)
 			self.define("index", self._parent._children.index(self))
 
+	def on_created(self):
+		pass
+
 	def define(self, name, value, types=None, *, relative=None):
 		if name in self._properties:
 			raise ElementPropertyDefinedError(f"Property {name!r} is already defined")

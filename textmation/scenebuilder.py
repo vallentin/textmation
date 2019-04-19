@@ -131,6 +131,8 @@ class SceneBuilder:
 			for child in self._build_children(create):
 				pass
 
+		element.on_created()
+
 		return element
 
 	def _build_Template(self, template):
