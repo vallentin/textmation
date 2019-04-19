@@ -10,8 +10,7 @@ import sys
 from .datatypes import Point, Size, Rect
 from .rasterizer import Image, Font
 from .rasterizer import Anchor, Alignment
-from .elements import Element
-from .templates import Scene
+from .elements import Element, Scene
 
 
 def calc_frame_count(duration, frame_rate, *, inclusive=False):
@@ -44,14 +43,14 @@ class Renderer:
 
 	def render(self, element):
 		assert isinstance(element, Element)
-		assert issubclass(element.template, Scene)
+		assert isinstance(element, Scene)
 		image = self._render(element)
 		assert isinstance(image, Image)
 		return image
 
 	def _render(self, element):
 		assert isinstance(element, Element)
-		method = "_render_%s" % element.template.__name__
+		method = "_render_%s" % element.__class__.__name__
 		visitor = getattr(self, method)
 		return visitor(element)
 

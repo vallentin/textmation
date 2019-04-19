@@ -4,10 +4,9 @@
 from contextlib import contextmanager, suppress
 from operator import attrgetter
 
-from .parser import parse, _units, Node, Create, Template as TemplateNode, Name
+from .parser import parse, _units, Node, Create, Template, Name
 from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
-from .elements import Element, Percentage, ElementPropertyDefinedError, CircularReferenceError
-from .templates import Template, Scene
+from .elements import Element, Scene, Percentage, ElementPropertyDefinedError, CircularReferenceError
 from .functions import functions
 
 
@@ -29,6 +28,35 @@ class SceneBuilder:
 		self._elements.append(element)
 		yield
 		assert self._elements.pop() is element
+
+	def _get_template(self, name, *, token=None):
+		try:
+			return self.templates[name]
+		except KeyError:
+			raise self._create_error(f"Creating undefined {name!r} template", token=token) from None
+
+	def _get_element_type(self, name, *, token=None):
+		template = self._get_template(name, token=token)
+		if isinstance(template, Template):
+			return self._get_element_type(template.inherit or "Drawable")
+		assert issubclass(template, Element)
+		return template
+
+	def _apply_template(self, element, template, *, token=None):
+		if isinstance(template, str):
+			try:
+				template = self.templates[template]
+			except KeyError:
+				raise self._create_error(f"Creating undefined {template!r} template", token=token) from None
+
+		if isinstance(template, Template):
+			with self._push_element(element):
+				self._apply_template(element, template.inherit or "Drawable", token=token)
+
+				for child in self._build_children(template):
+					pass
+		else:
+			element.on_ready()
 
 	def _get_property(self, element, name, *, token=None):
 		assert isinstance(element, Element)
@@ -63,12 +91,12 @@ class SceneBuilder:
 			assert isinstance(string, Create)
 			assert string.element == "Scene"
 
-			self.templates = dict((template.__name__, template) for template in Template.list_templates())
+			self.templates = dict((template.__name__, template) for template in Element.list_element_types())
 			self._elements = []
 
 			scene = self._build(string)
 
-			assert issubclass(scene.template, Scene)
+			assert isinstance(scene, Scene)
 
 			return scene
 
@@ -82,41 +110,22 @@ class SceneBuilder:
 		for child in node.children:
 			yield self._build(child)
 
-	def _apply_template(self, template, element, *, token=None):
-		if isinstance(template, str):
-			try:
-				template = self.templates[template]
-			except KeyError:
-				raise self._create_error(f"Creating undefined {template!r} template", token=token) from None
-
-		if isinstance(template, TemplateNode):
-			with self._push_element(element):
-				if template.inherit is not None:
-					self._apply_template(template.inherit, element, token=token)
-				else:
-					self._apply_template("Drawable", element, token=token)
-
-				for child in self._build_children(template):
-					pass
-		else:
-			assert element.template is None
-			element.template = template
-			template.apply(element)
-
 	def _build_Create(self, create):
-		element = Element()
-
 		if create.name:
 			raise NotImplementedError
+
+		element_type = self._get_element_type(create.element, token=create.token)
+
+		element = element_type()
+		element.on_init()
 
 		parent = None
 		with suppress(IndexError):
 			parent = self._element
-
 		if parent is not None:
 			parent.add(element)
 
-		self._apply_template(create.element, element, token=create.token)
+		self._apply_template(element, create.element, token=create.token)
 
 		with self._push_element(element):
 			for child in self._build_children(create):
@@ -147,7 +156,7 @@ class SceneBuilder:
 		try:
 			self._element.define(name, value)
 		except ElementPropertyDefinedError as ex:
-			raise self._create_error(f"{ex} in {self._element.type_name}", token=define.token) from None
+			raise self._create_error(f"{ex} in {self._element.__class__.__name__}", token=define.token) from None
 
 		return None
 
@@ -166,12 +175,12 @@ class SceneBuilder:
 		try:
 			self._element.set(name, value)
 		except KeyError:
-			raise self._create_error(f"Assigning value to undefined property {name!r} in {self._element.type_name}", token=assign.token) from None
+			raise self._create_error(f"Assigning value to undefined property {name!r} in {self._element.__class__.__name__}", token=assign.token) from None
 		except TypeError as ex:
-			raise self._create_error(f"{ex} in {self._element.type_name}", token=assign.token) from None
+			raise self._create_error(f"{ex} in {self._element.__class__.__name__}", token=assign.token) from None
 		except CircularReferenceError as ex:
 			paths = "\n".join(" -> ".join(map(attrgetter("name"), path)) for path in ex.paths)
-			raise self._create_error(f"{ex} in {self._element.type_name}", after=f"Paths:\n{paths}", token=assign.token) from None
+			raise self._create_error(f"{ex} in {self._element.__class__.__name__}", after=f"Paths:\n{paths}", token=assign.token) from None
 
 		return None
 

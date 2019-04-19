@@ -2,3 +2,5 @@
 # -*- coding: utf-8 -*-
 
 from .element import *
+from .scene import *
+from .drawables import *

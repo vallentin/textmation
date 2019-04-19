@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from operator import attrgetter
 
 from ..datatypes import Type, Value, Number, String
+from ..utilities import iter_all_subclasses
 
 
 class Percentage(Number):
@@ -120,13 +121,24 @@ ElementType = _Element()
 
 
 class Element(Value):
+	@staticmethod
+	def list_element_types():
+		return list(iter_all_subclasses(Element))
+
 	type = ElementType
 
 	def __init__(self):
-		self.template = None
 		self._properties = {}
 		self._children = []
 		self._parent = None
+
+	def on_init(self):
+		pass
+
+	def on_ready(self):
+		if self._parent is not None:
+			self.define("parent", self._parent)
+			self.define("index", self._parent._children.index(self))
 
 	def define(self, name, value, types=None, *, relative=None):
 		if name in self._properties:
@@ -181,13 +193,5 @@ class Element(Value):
 		# TODO
 		pass
 
-	@property
-	def type_name(self):
-		if self.template is not None:
-			return self.template.__name__
-		# if self.has("type"):
-		# 	return self.get("type").eval().unbox()
-		return self.__class__.__name__
-
 	def __repr__(self):
-		return f"<{self.type_name}: 0x{id(self):X}>"
+		return f"<{self.__class__.__name__}: 0x{id(self):X}>"
