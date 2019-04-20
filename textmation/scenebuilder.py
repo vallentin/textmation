@@ -6,7 +6,7 @@ from operator import attrgetter
 
 from .parser import parse, _units, Node, Create, Template, Name
 from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
-from .elements import Element, Scene, Percentage, ElementPropertyDefinedError, CircularReferenceError
+from .elements import Element, Scene, Percentage, ElementError, ElementPropertyDefinedError, CircularReferenceError
 from .functions import functions
 
 
@@ -123,7 +123,10 @@ class SceneBuilder:
 		with suppress(IndexError):
 			parent = self._element
 		if parent is not None:
-			parent.add(element)
+			try:
+				parent.add(element)
+			except NotImplementedError:
+				raise self._create_error(f"Cannot add {element.__class__.__name__} to {parent.__class__.__name__}", token=create.token) from None
 
 		self._apply_template(element, create.element, token=create.token)
 
@@ -131,7 +134,10 @@ class SceneBuilder:
 			for child in self._build_children(create):
 				pass
 
-		element.on_created()
+		try:
+			element.on_created()
+		except ElementError as ex:
+			raise self._create_error(f"{ex} in {element.__class__.__name__}", token=create.token) from None
 
 		return element
 

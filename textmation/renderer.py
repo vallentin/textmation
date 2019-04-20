@@ -4,6 +4,7 @@
 from contextlib import contextmanager, redirect_stdout
 from functools import reduce
 import operator
+from math import ceil
 from io import StringIO
 import sys
 
@@ -17,6 +18,7 @@ def calc_frame_count(duration, frame_rate, *, inclusive=False):
 	frames = duration * frame_rate
 	if inclusive:
 		frames += 1
+	frames = int(ceil(frames))
 	return frames
 
 
@@ -120,17 +122,14 @@ def _render(renderer, scene, time):
 
 
 def render(scene, time=0):
-	scene.reset()
 	return _render(Renderer(), scene, time)
 
 
 # TODO: Consider removing "inclusive" and instead use "scene.p_inclusive"
 def render_animation(scene, *, inclusive=True):
-	scene.reset()
-
 	renderer = Renderer()
 
-	duration = scene.p_duration
+	duration = scene.p_duration.seconds
 	frame_rate = scene.p_frame_rate
 
 	frame_count = calc_frame_count(duration, frame_rate, inclusive=inclusive)

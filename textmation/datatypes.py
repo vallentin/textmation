@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from enum import Enum
+from functools import total_ordering
 
 
 """
@@ -86,6 +87,8 @@ class _Number(Type):
 	__rtruediv__ = __add__
 	__floordiv__ = __add__
 	__rfloordiv__ = __add__
+	__mod__ = __add__
+	__rmod__ = __add__
 
 	def __neg__(self):
 		return NumberType
@@ -107,6 +110,8 @@ class Number(Value):
 	def __add__(self, other):
 		if isinstance(other, Number):
 			return Number(self.value + other.value)
+		if isinstance(other, (int, float)):
+			return Number(self.value + other)
 		return NotImplemented
 
 	__radd__ = __add__
@@ -114,16 +119,22 @@ class Number(Value):
 	def __sub__(self, other):
 		if isinstance(other, Number):
 			return Number(self.value - other.value)
+		if isinstance(other, (int, float)):
+			return Number(self.value - other)
 		return NotImplemented
 
 	def __rsub__(self, other):
 		if isinstance(other, Number):
 			return Number(other.value - self.value)
+		if isinstance(other, (int, float)):
+			return Number(other - self.value)
 		return NotImplemented
 
 	def __mul__(self, other):
 		if isinstance(other, Number):
 			return Number(self.value * other.value)
+		if isinstance(other, (int, float)):
+			return Number(self.value * other)
 		return NotImplemented
 
 	__rmul__ = __mul__
@@ -131,11 +142,43 @@ class Number(Value):
 	def __truediv__(self, other):
 		if isinstance(other, Number):
 			return Number(self.value / other.value)
+		if isinstance(other, (int, float)):
+			return Number(self.value / other)
 		return NotImplemented
 
 	def __rtruediv__(self, other):
 		if isinstance(other, Number):
 			return Number(other.value / self.value)
+		if isinstance(other, (int, float)):
+			return Number(other / self.value)
+		return NotImplemented
+
+	def __floordiv__(self, other):
+		if isinstance(other, Number):
+			return Number(self.value // other.value)
+		if isinstance(other, (int, float)):
+			return Number(self.value // other)
+		return NotImplemented
+
+	def __rfloordiv__(self, other):
+		if isinstance(other, Number):
+			return Number(other.value // self.value)
+		if isinstance(other, (int, float)):
+			return Number(other // self.value)
+		return NotImplemented
+
+	def __mod__(self, other):
+		if isinstance(other, Number):
+			return Number(self.value % other.value)
+		if isinstance(other, (int, float)):
+			return Number(self.value % other)
+		return NotImplemented
+
+	def __rmod__(self, other):
+		if isinstance(other, Number):
+			return Number(other.value % self.value)
+		if isinstance(other, (int, float)):
+			return Number(other % self.value)
 		return NotImplemented
 
 	def __neg__(self):
@@ -216,6 +259,7 @@ class TimeUnit(Enum):
 	Milliseconds = "ms"
 
 
+@total_ordering
 class Time(Value):
 	type = TimeType
 
@@ -261,6 +305,11 @@ class Time(Value):
 
 	def __neg__(self):
 		return Time(-self.duration, self.unit)
+
+	def __lt__(self, other):
+		if isinstance(other, Time):
+			return self.milliseconds < other.milliseconds
+		return NotImplemented
 
 	def __str__(self):
 		# TODO: pprint float
@@ -789,7 +838,7 @@ class Expression(Value):
 
 class BinOp(Expression):
 	def __init__(self, op, lhs, rhs):
-		assert op in "+-*/"
+		assert op in ("+", "-", "*", "/", "//", "%")
 		assert isinstance(lhs, Value)
 		assert isinstance(rhs, Value)
 		self.op, self.lhs, self.rhs = op, lhs, rhs
@@ -805,6 +854,10 @@ class BinOp(Expression):
 			return self.lhs.type * self.rhs.type
 		if self.op == "/":
 			return self.lhs.type / self.rhs.type
+		if self.op == "//":
+			return self.lhs.type // self.rhs.type
+		if self.op == "%":
+			return self.lhs.type % self.rhs.type
 
 	def eval(self):
 		if self.op == "+":
@@ -815,6 +868,10 @@ class BinOp(Expression):
 			return self.lhs.eval() * self.rhs.eval()
 		if self.op == "/":
 			return self.lhs.eval() / self.rhs.eval()
+		if self.op == "//":
+			return self.lhs.eval() // self.rhs.eval()
+		if self.op == "%":
+			return self.lhs.eval() % self.rhs.eval()
 
 	def apply(self, relative):
 		self.lhs.apply(relative)

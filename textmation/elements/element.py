@@ -23,6 +23,10 @@ class Percentage(Number):
 		self.relative = relative
 
 
+class ElementError(Exception):
+	pass
+
+
 class ElementPropertyDefinedError(Exception):
 	pass
 
@@ -85,6 +89,16 @@ class ElementProperty(Value):
 		return self.value
 
 	def set(self, value):
+		self.check_value(value)
+
+		self.value = value
+		self.value.apply(self.relative)
+
+		paths = find_cycles(self)
+		if paths:
+			raise CircularReferenceError(f"Circular dependency encountered", paths)
+
+	def check_value(self, value):
 		if isinstance(value, (int, float)):
 			value = Number(value)
 		elif isinstance(value, str):
@@ -95,13 +109,6 @@ class ElementProperty(Value):
 		if not any(value.type is type for type in self.types):
 			type_names = ", ".join(map(attrgetter("name"), self.types))
 			raise TypeError(f"Expected type of {type_names}, received {value.type.name}")
-
-		self.value = value
-		self.value.apply(self.relative)
-
-		paths = find_cycles(self)
-		if paths:
-			raise CircularReferenceError(f"Circular dependency encountered", paths)
 
 	def eval(self):
 		return self.value.eval()
@@ -129,6 +136,7 @@ class Element(Value):
 
 	def __init__(self):
 		self.properties = {}
+		self.computed_properties = {}
 		self.children = []
 		self.parent = None
 
@@ -158,6 +166,7 @@ class Element(Value):
 			relative = self.parent.get(relative)
 
 		self.properties[name] = ElementProperty(name, value, types, relative=relative)
+		self.computed_properties[name] = ElementProperty(name, value, types, relative=relative)
 
 	def get(self, name):
 		return self.properties[name]
@@ -165,6 +174,10 @@ class Element(Value):
 	def set(self, name, value):
 		assert isinstance(name, str)
 		self.get(name).set(value)
+
+	def check_value(self, name, value):
+		assert isinstance(name, str)
+		self.get(name).check_value(value)
 
 	# def has(self, name):
 	# 	return name in self.properties
@@ -186,13 +199,19 @@ class Element(Value):
 		element.parent = self
 		self.children.append(element)
 
-	def reset(self):
-		# TODO
-		pass
+	def traverse(self):
+		yield self
+		for child in self.children:
+			yield from child.traverse()
 
 	def compute(self, time):
-		# TODO
-		pass
+		for name, property in self.properties.items():
+			self.computed_properties[name].set(property.eval())
+		self.compute_children(time)
+
+	def compute_children(self, time):
+		for child in self.children:
+			child.compute(time)
 
 	def __repr__(self):
 		return f"<{self.__class__.__name__}: 0x{id(self):X}>"

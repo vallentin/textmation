@@ -42,7 +42,7 @@ if __name__ == "__main__":
 	if args.print_scene:
 		pprint_element(scene)
 
-	print(f"Rendering {calc_frame_count(scene.p_duration, scene.p_frame_rate, inclusive=scene.p_inclusive)} frames...", flush=True)
+	print(f"Rendering {calc_frame_count(scene.p_duration.seconds, scene.p_frame_rate, inclusive=scene.p_inclusive)} frames...", flush=True)
 
 	inclusive = bool(scene.p_inclusive)
 	frames = render_animation(scene, inclusive=inclusive)

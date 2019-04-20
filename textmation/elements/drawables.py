@@ -3,18 +3,22 @@
 
 from ..datatypes import *
 from .element import Element, Percentage
+from .animation import Animation
 
 
 class BaseDrawable(Element):
 	def __init__(self):
 		super().__init__()
 		self.elements = []
+		self.animations = []
 
 	def add(self, element):
 		super().add(element)
 
 		if isinstance(element, Drawable):
 			self.elements.append(element)
+		elif isinstance(element, Animation):
+			self.animations.append(element)
 		else:
 			raise NotImplementedError
 

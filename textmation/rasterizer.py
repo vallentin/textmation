@@ -55,7 +55,7 @@ class Image:
 	def new(size, background=Color(0, 0, 0, 255)):
 		assert isinstance(size, Size) and size.area > 0
 		assert isinstance(background, (Vec4, Color))
-		image = _Image.new("RGBA", tuple(size), tuple(background))
+		image = _Image.new("RGBA", tuple(map(int, size)), tuple(map(int, background)))
 		return Image(image)
 
 	@staticmethod
