@@ -3,6 +3,7 @@
 
 from enum import Enum
 from functools import total_ordering
+import math
 
 
 """
@@ -222,6 +223,117 @@ class String(Value):
 
 	def __repr__(self):
 		return f"{self.__class__.__name__}({self.string!r})"
+
+
+class _Angle(Type):
+	def __add__(self, other):
+		if other is AngleType:
+			return AngleType
+		return NotImplemented
+
+	def __sub__(self, other):
+		if other is AngleType:
+			return AngleType
+		return NotImplemented
+
+	def __mul__(self, other):
+		if other is NumberType:
+			return AngleType
+		return NotImplemented
+
+	__rmul__ = __mul__
+
+	def __truediv__(self, other):
+		if other is NumberType:
+			return AngleType
+		return NotImplemented
+
+	def __neg__(self):
+		return AngleType
+
+
+AngleType = _Angle()
+
+
+class AngleUnit(Enum):
+	Degrees = "deg"
+	Radians = "rad"
+	Turns = "turn"
+
+
+class Angle(Value):
+	type = AngleType
+
+	def __init__(self, angle, unit):
+		assert isinstance(angle, (int, float))
+		assert isinstance(unit, AngleUnit)
+		self.angle = angle
+		self.unit = unit
+
+	@property
+	def degrees(self):
+		if self.unit == AngleUnit.Degrees:
+			return self.angle
+		if self.unit == AngleUnit.Radians:
+			return math.degrees(self.angle)
+		if self.unit == AngleUnit.Turns:
+			return self.angle * 360
+		raise NotImplementedError
+
+	@property
+	def radians(self):
+		if self.unit == AngleUnit.Radians:
+			return self.angle
+		if self.unit == AngleUnit.Degrees:
+			return math.radians(self.angle)
+		if self.unit == AngleUnit.Turns:
+			return self.angle * math.tau
+		raise NotImplementedError
+
+	@property
+	def turns(self):
+		if self.unit == AngleUnit.Turns:
+			return self.angle
+		if self.unit == AngleUnit.Degrees:
+			return self.angle / 360
+		if self.unit == AngleUnit.Radians:
+			return self.angle / math.tau
+		raise NotImplementedError
+
+	def __add__(self, other):
+		if isinstance(other, Angle):
+			return Angle(self.degrees + other.degrees, AngleUnit.Degrees)
+		return NotImplemented
+
+	def __sub__(self, other):
+		if isinstance(other, Angle):
+			return Angle(self.degrees - other.degrees, AngleUnit.Degrees)
+		return NotImplemented
+
+	def __mul__(self, other):
+		if isinstance(other, Number):
+			return Angle(self.angle * other.value, self.unit)
+		if isinstance(other, (int, float)):
+			return Angle(self.angle * other, self.unit)
+		return NotImplemented
+
+	__rmul__ = __mul__
+
+	def __truediv__(self, other):
+		if isinstance(other, Number):
+			return Angle(self.angle / other.value, self.unit)
+		if isinstance(other, (int, float)):
+			return Angle(self.angle / other, self.unit)
+		return NotImplemented
+
+	def __neg__(self):
+		return Angle(-self.angle, self.unit)
+
+	def __str__(self):
+		return f"{self.angle}{self.unit.value}"
+
+	def __repr__(self):
+		return f"{self.__class__.__name__}({self.angle!r}, {self.unit})"
 
 
 class _Time(Type):

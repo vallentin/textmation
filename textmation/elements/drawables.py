@@ -111,8 +111,8 @@ class Arc(Ellipse):
 	def on_ready(self):
 		super().on_ready()
 
-		self.define("start_angle", 0)
-		self.define("end_angle", 360)
+		self.define("start_angle", Angle(0, AngleUnit.Degrees))
+		self.define("end_angle", Angle(360, AngleUnit.Degrees))
 
 
 class Line(Drawable):

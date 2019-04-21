@@ -5,7 +5,7 @@ from contextlib import contextmanager, suppress
 from operator import attrgetter
 
 from .parser import parse, _units, Node, Create, Template, Name
-from .datatypes import Value, Number, String, Time, TimeUnit, BinOp, UnaryOp, Call
+from .datatypes import Value, Number, String, Angle, AngleUnit, Time, TimeUnit, BinOp, UnaryOp, Call
 from .elements import Element, Scene, Percentage, ElementError, ElementPropertyDefinedError, CircularReferenceError
 from .functions import functions
 
@@ -222,6 +222,8 @@ class SceneBuilder:
 			return Number(value)
 		elif unit == "%":
 			return Percentage(value)
+		elif unit in (unit.value for unit in AngleUnit):
+			return Angle(value, AngleUnit(unit))
 		elif unit in (unit.value for unit in TimeUnit):
 			return Time(value, TimeUnit(unit))
 		else:

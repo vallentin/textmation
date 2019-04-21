@@ -10,7 +10,8 @@ from .lexer import Lexer, TokenType
 
 _keywords = "create", "as", "template", "inherit"
 _literals = "true", "false", "infinite"
-_units    = "%", "px", "s", "ms"
+_units    = "%", "px", "s", "ms", "deg", "rad", "turn"
+
 
 
 class Node:

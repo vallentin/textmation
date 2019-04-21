@@ -99,7 +99,7 @@ class Renderer:
 		if arc.p_start_angle == 0 and arc.p_end_angle == 360:
 			self._image.draw_ellipse(self.translation + center, arc.p_radius_x, arc.p_radius_y, arc.p_color, arc.p_outline, arc.p_outline_width)
 		else:
-			self._image.draw_arc(self.translation + center, arc.p_radius_x, arc.p_radius_y, arc.p_fill, arc.p_outline, arc.p_outline_width, arc.p_start_angle, arc.p_end_angle)
+			self._image.draw_arc(self.translation + center, arc.p_radius_x, arc.p_radius_y, arc.p_fill, arc.p_outline, arc.p_outline_width, arc.p_start_angle.degrees, arc.p_end_angle.degrees)
 		self._render_children(arc)
 
 	def _render_Line(self, line):
