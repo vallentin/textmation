@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from contextlib import contextmanager
+import math
 import re
 
 from .lexer import Lexer, TokenType
 
 
 _keywords = "create", "as", "template", "inherit"
-_literals = "true", "false"
+_literals = "true", "false", "infinite"
 _units    = "%", "px", "s", "ms"
 
 
@@ -405,6 +406,8 @@ class Parser:
 				return Number(1)
 			elif name.name == "false":
 				return Number(0)
+			elif name.name == "infinite":
+				return Number(math.inf)
 
 			if name in _literals:
 				self._fail(f"Unexpected literal {name!r}, expected {TokenType.Identifier.name}", token=token)
