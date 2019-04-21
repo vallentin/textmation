@@ -3,6 +3,8 @@
 
 from itertools import islice
 from functools import total_ordering
+from math import isinf
+from enum import IntEnum
 
 from ..datatypes import Time, TimeUnit
 from .element import Element, ElementError
@@ -22,19 +24,57 @@ def remap(value, lower1, upper1, lower2, upper2):
 	return lerp(lower2, upper2, normalize(value, lower1, upper1))
 
 
+def ping_pong(value, lower=0, upper=1):
+	length = upper - lower
+	length2 = length * 2
+	ping_ponged = value % length2
+
+	if ping_ponged < 0:
+		ping_ponged = -ping_ponged
+
+	if ping_ponged >= length:
+		return lower + length2 - ping_ponged
+	else:
+		return lower + ping_ponged
+
+
+class AnimationDirection(IntEnum):
+	Normal           = 1
+	Reverse          = 2
+	Alternate        = 3
+	AlternateReverse = 4
+	Default          = Normal
+
+
+class AnimationFillMode(IntEnum):
+	Never   = 1
+	After   = 2
+	Before  = 3
+	Always  = 4
+	Default = Never
+
+
 class Animation(Element):
 	def __init__(self):
 		super().__init__()
 		self.element_properties = None
 		self.keyframes = []
-		self._duration = Time(0, TimeUnit.Seconds)
+		# self._duration = Time(0, TimeUnit.Seconds)
 
 	def on_ready(self):
 		super().on_ready()
 
-		self.define("duration", self._duration)
+		# self.define("index", self.parent.animations.index(self))
+
+		# self.define("duration", self._duration)
 
 		self.define("delay", Time(0, TimeUnit.Seconds))
+
+		self.define("iterations", 1)
+
+		# TODO: Use enums and add type checking
+		self.define("direction", AnimationDirection.Default.name)
+		self.define("fill_mode", AnimationFillMode.Default.name)
 
 	def on_created(self):
 		super().on_created()
@@ -45,8 +85,8 @@ class Animation(Element):
 			raise ElementError(f"{self.__class__.__name__} requires at least one keyframe")
 
 		# Only calculate duration if it wasn't manually set
-		if self._duration is self.get("duration").get():
-			self.set("duration", max(self.keyframes).p_time)
+		# if self._duration is self.get("duration").get():
+		# 	self.set("duration", max(self.keyframes).p_time)
 
 		self.element_properties = set()
 		for keyframe in self.keyframes:
@@ -62,20 +102,39 @@ class Animation(Element):
 	def compute(self, time):
 		super().compute(time)
 
-		time = time - self.p_delay.seconds
+		if not self.is_affecting(time):
+			return
+
+		time = max(time - self.p_delay.seconds, 0)
+
+		if not self.infinite_iterations:
+			time = min(time, self.duration)
+
+		# TODO: Currently playback is exclusive, as in the last frame is excluded
+		# TODO: as that's when the animation wraps around
+		# TODO: Figure out what the general desired behavior is
+
+		if self.direction in (AnimationDirection.Normal, AnimationDirection.Reverse):
+			time %= self.iteration_duration
+			if self.direction == AnimationDirection.Reverse:
+				time = self.iteration_duration - time
+		elif self.direction == AnimationDirection.Alternate:
+			time = ping_pong(time, 0, self.iteration_duration)
+		elif self.direction == AnimationDirection.AlternateReverse:
+			time = ping_pong(time + self.iteration_duration, 0, self.iteration_duration)
 
 		before, after = self.get_between(time)
 
 		if before == after:
 			for name in self.element_properties:
-				self.element.set(name, before.eval(name))
+				self.element.set_computed(name, before.eval(name))
 		else:
 			time = normalize(time, before.time.seconds, after.time.seconds)
 
 			for name in self.element_properties:
 				before_value = before.eval(name)
 				after_value = after.eval(name)
-				self.element.set(name, lerp(before_value, after_value, time))
+				self.element.set_computed(name, lerp(before_value, after_value, time))
 
 	def add(self, keyframe):
 		super().add(keyframe)
@@ -91,15 +150,39 @@ class Animation(Element):
 
 	@property
 	def duration(self):
-		return self.p_duration
+		# return self.p_duration.seconds
+		return self.end_time - self.begin_time
 
 	@property
 	def begin_time(self):
-		return self.keyframes[0].time + self.p_delay
+		return (self.keyframes[0].time + self.p_delay).seconds
 
 	@property
 	def end_time(self):
-		return self.begin_time + self.duration
+		# return self.begin_time + self.duration
+		iterations = self.p_iterations
+		if isinf(iterations):
+			return self.begin_time
+		return self.begin_time + self.iteration_duration * iterations
+
+	@property
+	def iteration_duration(self):
+		first = self.keyframes[0].time.seconds
+		last  = self.keyframes[-1].time.seconds
+		duration = last - first
+		return duration
+
+	@property
+	def infinite_iterations(self):
+		return isinf(self.p_iterations)
+
+	@property
+	def direction(self):
+		return AnimationDirection[self.p_direction]
+
+	@property
+	def fill_mode(self):
+		return AnimationFillMode[self.p_fill_mode]
 
 	def get_between(self, time):
 		first = self.keyframes[0]
@@ -113,6 +196,22 @@ class Animation(Element):
 		for i, keyframe in enumerate(islice(self.keyframes, 1, None), start=1):
 			if time < keyframe.time.seconds:
 				return self.keyframes[i - 1], keyframe
+
+	def is_affecting(self, time):
+		if self.fill_mode == AnimationFillMode.Always:
+			return True
+
+		if self.infinite_iterations:
+			return time >= self.begin_time
+
+		if self.fill_mode == AnimationFillMode.Never:
+			return self.begin_time <= time <= self.end_time
+		if self.fill_mode == AnimationFillMode.After:
+			return time >= self.begin_time
+		if self.fill_mode == AnimationFillMode.Before:
+			return time <= self.end_time
+
+		return False
 
 
 @total_ordering

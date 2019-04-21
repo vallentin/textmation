@@ -89,6 +89,11 @@ class ElementProperty(Value):
 		return self.value
 
 	def set(self, value):
+		if isinstance(value, (int, float)):
+			value = Number(value)
+		elif isinstance(value, str):
+			value = String(value)
+
 		self.check_value(value)
 
 		self.value = value
@@ -174,10 +179,18 @@ class Element(Value):
 	def set(self, name, value):
 		assert isinstance(name, str)
 		self.get(name).set(value)
+		self.set_computed(name, value)
+
+	def get_computed(self, name):
+		return self.computed_properties[name]
+
+	def set_computed(self, name, value):
+		assert isinstance(name, str)
+		self.get_computed(name).set(value)
 
 	def check_value(self, name, value):
-		assert isinstance(name, str)
 		self.get(name).check_value(value)
+		# No need to check computed_properties since they're the same
 
 	# def has(self, name):
 	# 	return name in self.properties
@@ -185,7 +198,7 @@ class Element(Value):
 	def eval(self, name=None):
 		if name is None:
 			return self
-		return self.get(name).eval()
+		return self.get_computed(name).eval()
 
 	def __getattr__(self, name):
 		if name.startswith("p_"):
@@ -206,7 +219,7 @@ class Element(Value):
 
 	def compute(self, time):
 		for name, property in self.properties.items():
-			self.computed_properties[name].set(property.eval())
+			self.set_computed(name, property.eval())
 		self.compute_children(time)
 
 	def compute_children(self, time):

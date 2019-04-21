@@ -11,7 +11,7 @@ def _duration(scene):
 
 	for element in scene.traverse():
 		if isinstance(element, Animation):
-			duration = max(duration, element.end_time.seconds)
+			duration = max(duration, element.end_time)
 
 	return Time(duration, TimeUnit.Seconds)
 
