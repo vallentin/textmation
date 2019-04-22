@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 from math import ceil
 import os
 from os.path import abspath, dirname, join
 import time
+import subprocess
 from argparse import ArgumentParser
 
 from .parser import parse
@@ -14,10 +16,26 @@ from .renderer import render_animation, calc_frame_count
 from .pretty import pretty_duration, pprint_ast, pprint_element
 
 
+_ffmpeg_formats = ".mp4", ".avi", ".webm"
+_formats = ".gif", *_ffmpeg_formats
+
+
 def run(input_filename, output_filename, *, save_frames=False, print_ast=False, print_scene=False):
 	begin = time.time()
 
 	output_dir = abspath(dirname(output_filename))
+	frames_dir = join(output_dir, "frames")
+	frames_basename_format = "frame_%04d.png"
+
+	needs_ffmpeg = output_filename.lower().endswith(_ffmpeg_formats)
+	save_frames = save_frames or needs_ffmpeg
+
+	if not output_filename.lower().endswith(_formats):
+		ext = os.path.splitext(output_filename)[1]
+		print(f"Unknown export format {ext}, expected any of", ", ".join(_formats), file=sys.stderr)
+		exit(1)
+
+	print(f"Processing: {os.path.relpath(input_filename)}")
 
 	with open(input_filename) as f:
 		string = f.read()
@@ -45,18 +63,26 @@ def run(input_filename, output_filename, *, save_frames=False, print_ast=False, 
 	if save_frames:
 		print("Exporting Frames...", flush=True)
 
-		frames_dir = join(output_dir, "frames")
-
 		os.makedirs(frames_dir, exist_ok=True)
 
 		for i, frame in enumerate(frames, start=1):
-			frame.save(join(frames_dir, f"frame_{i:04d}.png"))
+			frame.save(join(frames_dir, frames_basename_format % i))
 
 	print("Exporting Animation...", flush=True)
 
 	os.makedirs(output_dir, exist_ok=True)
 
-	Image.save_gif(output_filename, frames, scene.p_frame_rate)
+	if needs_ffmpeg:
+		subprocess.run([
+			"ffmpeg",
+			"-y", "-loglevel", "error",
+			"-framerate", str(scene.p_frame_rate),
+			"-i", join(frames_dir, frames_basename_format),
+			"-frames", str(len(frames)),
+			output_filename,
+		])
+	else:
+		Image.save_gif(output_filename, frames, scene.p_frame_rate)
 
 	end = time.time()
 	duration = end - begin
