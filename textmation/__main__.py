@@ -1,18 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from math import ceil
 import os
 from os.path import abspath, dirname, join
+import time
 from argparse import ArgumentParser
 
 from .parser import parse
 from .scenebuilder import SceneBuilder
 from .rasterizer import Image
 from .renderer import render_animation, calc_frame_count
-from .pretty import pprint_ast, pprint_element
+from .pretty import pretty_duration, pprint_ast, pprint_element
 
 
 def run(input_filename, output_filename, *, save_frames=False, print_ast=False, print_scene=False):
+	begin = time.time()
+
 	output_dir = abspath(dirname(output_filename))
 
 	with open(input_filename) as f:
@@ -53,6 +57,10 @@ def run(input_filename, output_filename, *, save_frames=False, print_ast=False, 
 	os.makedirs(output_dir, exist_ok=True)
 
 	Image.save_gif(output_filename, frames, scene.p_frame_rate)
+
+	end = time.time()
+	duration = end - begin
+	print(f"Rendered in {pretty_duration(ceil(duration))}")
 
 
 def main():
