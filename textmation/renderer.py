@@ -12,6 +12,7 @@ from .datatypes import Point, Size, Rect
 from .rasterizer import Image, Font
 from .rasterizer import Anchor, Alignment
 from .elements import Element, Scene
+from .utilities import iter_all_superclasses
 
 
 def calc_frame_count(duration, frame_rate, *, inclusive=False):
@@ -52,8 +53,21 @@ class Renderer:
 
 	def _render(self, element):
 		assert isinstance(element, Element)
-		method = "_render_%s" % element.__class__.__name__
-		visitor = getattr(self, method)
+
+		try:
+			method = "_render_%s" % element.__class__.__name__
+			visitor = getattr(self, method)
+		except AttributeError:
+			for cls in filter(lambda cls: issubclass(cls, Element), iter_all_superclasses(element.__class__)):
+				try:
+					method = "_render_%s" % cls.__name__
+					visitor = getattr(self, method)
+					break
+				except AttributeError:
+					pass
+			else:
+				raise
+
 		return visitor(element)
 
 	def _render_children(self, element):

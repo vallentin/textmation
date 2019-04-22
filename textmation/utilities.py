@@ -24,6 +24,12 @@ def setattr_consecutive(obj, name, value):
 	setattr(obj, name, value)
 
 
+def iter_all_superclasses(cls):
+	for cls in cls.__bases__:
+		yield cls
+		yield from iter_all_superclasses(cls)
+
+
 def iter_all_subclasses(cls):
 	# Assumes no multiple inheritance
 	for cls in cls.__subclasses__():
