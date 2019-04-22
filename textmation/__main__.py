@@ -12,26 +12,17 @@ from .renderer import render_animation, calc_frame_count
 from .pretty import pprint_ast, pprint_element
 
 
-if __name__ == "__main__":
-	args_parser = ArgumentParser()
-	args_parser.add_argument("-o", "--output", default="output.gif", help="Output filename")
-	args_parser.add_argument("filename", help="Textmation file to process")
-	args_parser.add_argument("--save-frames", action="store_const", const=True, default=False)
-	args_parser.add_argument("--print-ast", action="store_const", const=True, default=False)
-	args_parser.add_argument("--print-scene", action="store_const", const=True, default=False)
+def run(input_filename, output_filename, *, save_frames=False, print_ast=False, print_scene=False):
+	output_dir = abspath(dirname(output_filename))
 
-	args = args_parser.parse_args()
-
-	output_dir = abspath(dirname(args.output))
-
-	with open(args.filename) as f:
+	with open(input_filename) as f:
 		string = f.read()
 
 	print("Parsing...", flush=True)
 
 	tree = parse(string)
 
-	if args.print_ast:
+	if print_ast:
 		pprint_ast(tree)
 
 	print("Building Scene...", flush=True)
@@ -39,7 +30,7 @@ if __name__ == "__main__":
 	builder = SceneBuilder()
 	scene = builder.build(tree)
 
-	if args.print_scene:
+	if print_scene:
 		pprint_element(scene)
 
 	print(f"Rendering {calc_frame_count(scene.p_duration.seconds, scene.p_frame_rate, inclusive=scene.p_inclusive)} frames...", flush=True)
@@ -47,7 +38,7 @@ if __name__ == "__main__":
 	inclusive = bool(scene.p_inclusive)
 	frames = render_animation(scene, inclusive=inclusive)
 
-	if args.save_frames:
+	if save_frames:
 		print("Exporting Frames...", flush=True)
 
 		frames_dir = join(output_dir, "frames")
@@ -61,4 +52,21 @@ if __name__ == "__main__":
 
 	os.makedirs(output_dir, exist_ok=True)
 
-	Image.save_gif(args.output, frames, scene.p_frame_rate)
+	Image.save_gif(output_filename, frames, scene.p_frame_rate)
+
+
+def main():
+	args_parser = ArgumentParser()
+	args_parser.add_argument("-o", "--output", default="output.gif", help="Output filename")
+	args_parser.add_argument("filename", help="Textmation file to process")
+	args_parser.add_argument("--save-frames", action="store_const", const=True, default=False)
+	args_parser.add_argument("--print-ast", action="store_const", const=True, default=False)
+	args_parser.add_argument("--print-scene", action="store_const", const=True, default=False)
+
+	args = args_parser.parse_args()
+
+	run(args.filename, args.output, save_frames=args.save_frames, print_ast=args.print_ast, print_scene=args.print_scene)
+
+
+if __name__ == "__main__":
+	main()
