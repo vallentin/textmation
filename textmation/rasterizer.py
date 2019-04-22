@@ -304,9 +304,10 @@ class Font:
 		try:
 			return _fonts[font, size]
 		except KeyError:
-			font = _ImageFont.truetype(font, size)
-			_fonts[font, size] = font
-			return Font(font, size)
+			_font = _ImageFont.truetype(font, size)
+			_font = Font(_font, size)
+			_fonts[font, size] = _font
+			return _font
 
 	def __init__(self, font, size):
 		self._font = font
