@@ -13,7 +13,6 @@ _literals = "true", "false", "infinite"
 _units    = "%", "px", "s", "ms", "deg", "rad", "turn"
 
 
-
 class Node:
 	def __init__(self, children=None, *, token=None):
 		self.children = []
@@ -72,13 +71,16 @@ class Number(Node):
 	def __init__(self, value, *, token=None):
 		super().__init__(token=token)
 
-		m = re.match(r"^(\d+(?:\.\d+)?)(.+)?$", value)
-		if m is None:
-			raise ParserError(f"Invalid number format {value!r}")
+		if not isinstance(value, (int, float)):
+			m = re.match(r"^(\d+(?:\.\d+)?)(.+)?$", value)
+			if m is None:
+				raise ParserError(f"Invalid number format {value!r}")
 
-		self.string = value
-		self.raw_value, self.unit = m.groups()
-		self.value = float(self.raw_value) if "." in self.raw_value else int(self.raw_value)
+			self.value, self.unit = m.groups()
+			self.value = float(self.value) if "." in self.value else int(self.value)
+		else:
+			self.value = value
+			self.unit = None
 
 		if self.unit is not None:
 			if self.unit not in _units:
