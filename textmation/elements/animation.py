@@ -10,6 +10,12 @@ from ..datatypes import Time, TimeUnit
 from .element import Element, ElementError
 
 
+def is_int(x):
+	if isinstance(x, int):
+		return True
+	return x.is_integer()
+
+
 def normalize(value, lower, upper):
 	return (value - lower) / (upper - lower)
 
@@ -107,12 +113,10 @@ class Animation(Element):
 
 		time = max(time - self.p_delay.seconds, 0)
 
+		is_after = not self.infinite_iterations and time >= self.duration
+
 		if not self.infinite_iterations:
 			time = min(time, self.duration)
-
-		# TODO: Currently playback is exclusive, as in the last frame is excluded
-		# TODO: as that's when the animation wraps around
-		# TODO: Figure out what the general desired behavior is
 
 		if self.direction in (AnimationDirection.Normal, AnimationDirection.Reverse):
 			time %= self.iteration_duration
@@ -124,6 +128,15 @@ class Animation(Element):
 			time = ping_pong(time + self.iteration_duration, 0, self.iteration_duration)
 
 		before, after = self.get_between(time)
+
+		if is_after and is_int(self.iterations):
+			if self.fill_mode in (AnimationFillMode.After, AnimationFillMode.Always):
+				if self.direction == AnimationDirection.Normal:
+					after = self.keyframes[-1]
+					before = after
+				elif self.direction == AnimationDirection.Reverse:
+					after = self.keyframes[0]
+					before = after
 
 		if before == after:
 			for name in self.element_properties:
@@ -173,8 +186,12 @@ class Animation(Element):
 		return duration
 
 	@property
+	def iterations(self):
+		return self.p_iterations
+
+	@property
 	def infinite_iterations(self):
-		return isinf(self.p_iterations)
+		return isinf(self.iterations)
 
 	@property
 	def direction(self):
