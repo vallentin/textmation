@@ -125,6 +125,7 @@ class SceneBuilder:
 		if parent is not None:
 			try:
 				parent.add(element)
+				parent.on_element(element)
 			except NotImplementedError:
 				raise self._create_error(f"Cannot add {element.__class__.__name__} to {parent.__class__.__name__}", token=create.token) from None
 

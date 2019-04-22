@@ -148,9 +148,15 @@ class Element(Value):
 	def on_init(self):
 		pass
 
+	def on_element(self, element):
+		assert element.parent is not None
+		assert element.parent == self
+		element.define("parent", element.parent)
+
 	def on_ready(self):
-		if self.parent is not None:
-			self.define("parent", self.parent)
+		# if self.parent is not None:
+		# 	self.define("parent", self.parent)
+		pass
 
 	def on_created(self):
 		pass
