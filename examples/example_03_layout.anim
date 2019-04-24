@@ -1,0 +1,36 @@
+
+width = 200
+height = 200
+
+template MyText inherit Text
+	font_size = 80
+
+template MyRect inherit Rectangle
+	text := "A"
+
+	fill = rgba(255, 0, 0, 150)
+
+	create MyText
+		text = parent.text
+
+create VBox
+	create HBox
+		create MyRect
+			text = "A"
+		create MyRect
+			text = "B"
+			fill = rgba(0, 255, 0, 150)
+		create MyRect
+			text = "C"
+			fill = rgba(0, 0, 255, 150)
+
+	create HBox
+		create MyRect
+			text = "D"
+			fill = rgba(255, 0, 255, 150)
+		create MyRect
+			text = "E"
+			fill = rgba(255, 255, 0, 150)
+		create MyRect
+			text = "F"
+			fill = rgba(0, 255, 255, 150)

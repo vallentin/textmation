@@ -1,0 +1,53 @@
+
+width = 400
+height = 300
+
+background = rgba(20, 21, 24, 255)
+
+frame_rate = 40
+
+template Slide inherit Rectangle
+	text := "Slide"
+
+	enter := 0s
+	exit := enter + 2s
+	transition_duration := 750ms
+
+	create Text
+		text = parent.text
+		font_size = 48
+		x = 50%
+		y = 50%
+
+	create Animation
+		fill_mode = "After"
+		create Keyframe
+			time = 0s
+			x = -100%
+		create Keyframe
+			time = enter
+			x = -100%
+		create Keyframe
+			time = enter + transition_duration
+			x = 0
+		create Keyframe
+			time = exit
+			x = 0
+		create Keyframe
+			time = exit + transition_duration
+			x = 100%
+
+create Slide
+	text = "Slide 1"
+	enter = 1s
+	fill = rgba(255, 0, 0, 100)
+
+create Slide
+	text = "Slide 2"
+	enter = 3s
+	fill = rgba(255, 255, 0, 100)
+
+create Slide
+	text = "Slide 3"
+	enter = 5s
+	fill = rgba(255, 0, 255, 100)
