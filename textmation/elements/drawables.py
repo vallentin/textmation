@@ -140,6 +140,9 @@ class Text(Drawable):
 	def on_ready(self):
 		super().on_ready()
 
+		self.set("x", Percentage(50))
+		self.set("y", Percentage(50))
+
 		self.define("text", "")
 
 		self.define("font", "arial")
