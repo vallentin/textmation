@@ -50,8 +50,8 @@ class Circle(Drawable):
 	def on_ready(self):
 		super().on_ready()
 
-		self.define("center_x", BinOp("+", Percentage(50), BinOp("/", self.get("width"), Number(2))), relative="width")
-		self.define("center_y", BinOp("+", Percentage(50), BinOp("/", self.get("height"), Number(2))), relative="height")
+		self.define("center_x", BinOp("-", Percentage(50), BinOp("/", self.get("width"), Number(2))), relative="width")
+		self.define("center_y", BinOp("-", Percentage(50), BinOp("/", self.get("height"), Number(2))), relative="height")
 
 		# TODO: Should radius be relative to width, height, min(width, height) or max(width, height)
 		# self.define("radius", Percentage(50), relative="width")
@@ -78,8 +78,8 @@ class Ellipse(Drawable):
 	def on_ready(self):
 		super().on_ready()
 
-		self.define("center_x", BinOp("+", Percentage(50), BinOp("/", self.get("width"), Number(2))), relative="width")
-		self.define("center_y", BinOp("+", Percentage(50), BinOp("/", self.get("height"), Number(2))), relative="height")
+		self.define("center_x", BinOp("-", Percentage(50), BinOp("/", self.get("width"), Number(2))), relative="width")
+		self.define("center_y", BinOp("-", Percentage(50), BinOp("/", self.get("height"), Number(2))), relative="height")
 
 		# TODO: Should radius be relative to width, height, min(width, height) or max(width, height)
 		# self.define("radius", Percentage(50), relative="width")
