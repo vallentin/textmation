@@ -53,6 +53,8 @@ Here are some rendered versions of the examples found in the [examples](https://
 
 ### [Sliding Transition](https://github.com/Vallentin/textmation/blob/master/examples/example_04_slide.anim)
 
+*Camo seems to break the GIF, so here's a [direct link to the GIF](https://vallentin.io/img/textmation/slide.gif).*
+
 <p align="center">
   <img src="https://vallentin.io/img/textmation/slide.gif">
 </p>
