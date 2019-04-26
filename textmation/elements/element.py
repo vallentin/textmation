@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from operator import attrgetter
 
 from ..datatypes import Type, Value, Number, String
@@ -28,6 +28,10 @@ class ElementError(Exception):
 
 
 class ElementPropertyDefinedError(Exception):
+	pass
+
+
+class ElementPropertyReadonlyError(Exception):
 	pass
 
 
@@ -58,7 +62,7 @@ def find_cycles(value):
 
 
 class ElementProperty(Value):
-	def __init__(self, name, value, types=None, *, relative=None):
+	def __init__(self, name, value, types=None, *, relative=None, readonly=False):
 		assert isinstance(name, str)
 		assert isinstance(value, Value)
 
@@ -78,8 +82,11 @@ class ElementProperty(Value):
 		self.value = None
 		self.types = types
 		self.relative = relative
+		self.readonly = False
 
 		self.set(value)
+
+		self.readonly = readonly
 
 	@property
 	def type(self):
@@ -89,6 +96,9 @@ class ElementProperty(Value):
 		return self.value
 
 	def set(self, value):
+		if self.readonly:
+			raise ElementPropertyReadonlyError(f"Cannot set value of readonly property {self.name!r}")
+
 		if isinstance(value, (int, float)):
 			value = Number(value)
 		elif isinstance(value, str):
@@ -151,7 +161,7 @@ class Element(Value):
 	def on_element(self, element):
 		assert element.parent is not None
 		assert element.parent == self
-		element.define("parent", element.parent)
+		element.define("parent", element.parent, readonly=True)
 
 	def on_ready(self):
 		# if self.parent is not None:
@@ -161,7 +171,7 @@ class Element(Value):
 	def on_created(self):
 		pass
 
-	def define(self, name, value, types=None, *, relative=None):
+	def define(self, name, value, types=None, *, relative=None, readonly=False):
 		if name in self.properties:
 			raise ElementPropertyDefinedError(f"Property {name!r} is already defined")
 
@@ -176,8 +186,10 @@ class Element(Value):
 			assert self.parent is not None
 			relative = self.parent.get(relative)
 
-		self.properties[name] = ElementProperty(name, value, types, relative=relative)
-		self.computed_properties[name] = ElementProperty(name, value, types, relative=relative)
+		self.properties[name] = ElementProperty(name, value, types, relative=relative, readonly=readonly)
+
+		if not readonly:
+			self.computed_properties[name] = ElementProperty(name, value, types, relative=relative, readonly=readonly)
 
 	def get(self, name):
 		return self.properties[name]
@@ -188,7 +200,9 @@ class Element(Value):
 		self.set_computed(name, value)
 
 	def get_computed(self, name):
-		return self.computed_properties[name]
+		with suppress(KeyError):
+			return self.computed_properties[name]
+		return self.get(name)
 
 	def set_computed(self, name, value):
 		assert isinstance(name, str)
@@ -225,6 +239,8 @@ class Element(Value):
 
 	def compute(self, time):
 		for name, property in self.properties.items():
+			if property.readonly:
+				continue
 			self.set_computed(name, property.eval())
 		self.compute_children(time)
 

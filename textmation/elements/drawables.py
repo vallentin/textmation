@@ -27,7 +27,7 @@ class Drawable(BaseDrawable):
 	def on_ready(self):
 		super().on_ready()
 
-		self.define("index", self.parent.children.index(self))
+		self.define("index", self.parent.children.index(self), readonly=True)
 
 		self.define("x", 0, relative="width")
 		self.define("y", 0, relative="height")
