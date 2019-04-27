@@ -24,17 +24,16 @@ class Scene(BaseDrawable):
 	def on_ready(self):
 		super().on_ready()
 
-		self.define("width", 100, Number)
-		self.define("height", 100, Number)
+		self.define("width", 100, Number, constant=True)
+		self.define("height", 100, Number, constant=True)
 
 		self.define("background", Vec4(0, 0, 0, 255))
 
-		self.define("frame_rate", 20, Number)
+		self.define("frame_rate", 20, Number, constant=True)
 
-		self.define("duration", self._duration)
+		self.define("duration", self._duration, constant=True)
 
-		# TODO: What should be default?
-		self.define("inclusive", 1, Number)
+		self.define("inclusive", 1, Number, constant=True)
 
 	def on_created(self):
 		# Only calculate duration if it wasn't manually set

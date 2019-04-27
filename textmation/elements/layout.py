@@ -9,7 +9,7 @@ class HBox(Drawable):
 	def on_element(self, element):
 		super().on_element(element)
 
-		element.define("ix", len(self.elements) - 1)
+		element.define("ix", len(self.elements) - 1, readonly=True, constant=True)
 
 	def on_created(self):
 		super().on_created()
@@ -26,7 +26,7 @@ class VBox(Drawable):
 	def on_element(self, element):
 		super().on_element(element)
 
-		element.define("iy", len(self.elements) - 1)
+		element.define("iy", len(self.elements) - 1, readonly=True, constant=True)
 
 	def on_created(self):
 		super().on_created()

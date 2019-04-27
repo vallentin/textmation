@@ -70,17 +70,15 @@ class Animation(Element):
 	def on_ready(self):
 		super().on_ready()
 
-		# self.define("index", self.parent.animations.index(self))
+		# self.define("duration", self._duration, constant=True)
 
-		# self.define("duration", self._duration)
+		self.define("delay", Time(0, TimeUnit.Seconds), constant=True)
 
-		self.define("delay", Time(0, TimeUnit.Seconds))
-
-		self.define("iterations", 1)
+		self.define("iterations", 1, constant=True)
 
 		# TODO: Use enums and add type checking
-		self.define("direction", AnimationDirection.Default.name)
-		self.define("fill_mode", AnimationFillMode.Default.name)
+		self.define("direction", AnimationDirection.Default.name, constant=True)
+		self.define("fill_mode", AnimationFillMode.Default.name, constant=True)
 
 	def on_created(self):
 		super().on_created()
@@ -240,7 +238,7 @@ class Keyframe(Element):
 	def on_ready(self):
 		super().on_ready()
 
-		self.define("time", Time(0, TimeUnit.Seconds))
+		self.define("time", Time(0, TimeUnit.Seconds), constant=True)
 
 	def compute(self, time):
 		# Keyframe is transparently setting properties to its element
@@ -254,7 +252,13 @@ class Keyframe(Element):
 			element = self.animation.element
 			# element.set(name, value)
 			element.check_value(name, value)
-			super().define(name, value, relative=element.get(name).relative)
+
+			property = element.get(name)
+			property.check_assignable(dynamic=True)
+
+			property.keyframes.append(self)
+
+			super().define(name, value, relative=property.relative)
 			self.element_properties.append(name)
 
 	def add(self, element):

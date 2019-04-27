@@ -65,6 +65,9 @@ class Value:
 	def eval(self):
 		return self
 
+	def is_constant(self):
+		raise NotImplementedError
+
 	def apply(self, relative):
 		pass
 
@@ -107,6 +110,9 @@ class Number(Value):
 
 	def unbox(self):
 		return self.value
+
+	def is_constant(self):
+		return True
 
 	def __add__(self, other):
 		if isinstance(other, Number):
@@ -212,6 +218,9 @@ class String(Value):
 	def unbox(self):
 		return self.string
 
+	def is_constant(self):
+		return True
+
 	def __add__(self, other):
 		return String(self.string + str(other))
 
@@ -299,6 +308,9 @@ class Angle(Value):
 		if self.unit == AngleUnit.Radians:
 			return self.angle / math.tau
 		raise NotImplementedError
+
+	def is_constant(self):
+		return True
 
 	def __add__(self, other):
 		if isinstance(other, Angle):
@@ -392,6 +404,9 @@ class Time(Value):
 		if self.unit == TimeUnit.Milliseconds:
 			return self.duration
 		return self.seconds * 1000
+
+	def is_constant(self):
+		return True
 
 	def __add__(self, other):
 		if isinstance(other, Time):
@@ -521,6 +536,9 @@ class Vec2(Value):
 	def rg(self):
 		return self.xy
 
+	def is_constant(self):
+		return True
+
 	def __add__(self, other):
 		if isinstance(other, Vec2):
 			return Vec2(self.x + other.x, self.y + other.y)
@@ -620,6 +638,9 @@ class Vec3(Value):
 	@property
 	def rgb(self):
 		return self.xyz
+
+	def is_constant(self):
+		return True
 
 	def __add__(self, other):
 		if isinstance(other, Vec3):
@@ -742,6 +763,9 @@ class Vec4(Value):
 	@property
 	def rgba(self):
 		return self.xyzw
+
+	def is_constant(self):
+		return True
 
 	def __add__(self, other):
 		if isinstance(other, Vec4):
@@ -909,6 +933,9 @@ class Rect(Value):
 	def max(self):
 		return Point(*(self.position + self.size))
 
+	def is_constant(self):
+		return True
+
 	def __add__(self, other):
 		if isinstance(other, Vec2):
 			return Rect(self.position + other, self.size)
@@ -942,6 +969,9 @@ class Rect(Value):
 
 class Expression(Value):
 	def eval(self):
+		raise NotImplementedError
+
+	def is_constant(self):
 		raise NotImplementedError
 
 	def apply(self, relative):
@@ -985,6 +1015,9 @@ class BinOp(Expression):
 		if self.op == "%":
 			return self.lhs.eval() % self.rhs.eval()
 
+	def is_constant(self):
+		return self.lhs.is_constant() and self.rhs.is_constant()
+
 	def apply(self, relative):
 		self.lhs.apply(relative)
 		self.rhs.apply(relative)
@@ -1011,6 +1044,9 @@ class UnaryOp(Expression):
 	def eval(self):
 		return -self.operand.eval()
 
+	def is_constant(self):
+		return self.operand.is_constant()
+
 	def apply(self, relative):
 		self.operand.apply(relative)
 
@@ -1033,6 +1069,12 @@ class Call(Expression):
 
 	def eval(self):
 		return self.func(*(arg.eval() for arg in self.args))
+
+	def is_constant(self):
+		for arg in self.args:
+			if not arg.is_constant():
+				return False
+		return True
 
 	def apply(self, relative):
 		for arg in self.args:

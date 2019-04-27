@@ -35,6 +35,10 @@ class ElementPropertyReadonlyError(Exception):
 	pass
 
 
+class ElementPropertyConstantError(Exception):
+	pass
+
+
 class CircularReferenceError(Exception):
 	def __init__(self, message, paths):
 		super().__init__(message)
@@ -62,7 +66,7 @@ def find_cycles(value):
 
 
 class ElementProperty(Value):
-	def __init__(self, name, value, types=None, *, relative=None, readonly=False):
+	def __init__(self, name, value, types=None, *, relative=None, readonly=False, constant=False):
 		assert isinstance(name, str)
 		assert isinstance(value, Value)
 
@@ -83,6 +87,8 @@ class ElementProperty(Value):
 		self.types = types
 		self.relative = relative
 		self.readonly = False
+		self.constant = constant
+		self.keyframes = []
 
 		self.set(value)
 
@@ -96,8 +102,7 @@ class ElementProperty(Value):
 		return self.value
 
 	def set(self, value):
-		if self.readonly:
-			raise ElementPropertyReadonlyError(f"Cannot set value of readonly property {self.name!r}")
+		self.check_assignable(value)
 
 		if isinstance(value, (int, float)):
 			value = Number(value)
@@ -125,8 +130,24 @@ class ElementProperty(Value):
 			type_names = ", ".join(map(attrgetter("name"), self.types))
 			raise TypeError(f"Expected type of {type_names}, received {value.type.name}")
 
+	def check_assignable(self, value=None, *, dynamic=False):
+		if self.readonly:
+			raise ElementPropertyReadonlyError(f"Cannot set value of readonly property {self.name!r}")
+		if self.constant:
+			if value is not None and not value.is_constant() or dynamic:
+				raise ElementPropertyConstantError(f"Cannot assign non-constant value to property {self.name!r}")
+
 	def eval(self):
 		return self.value.eval()
+
+	def is_constant(self):
+		if self.constant:
+			return True
+		if not self.value.is_constant():
+			return False
+		if len(self.keyframes) > 0:
+			return False
+		return True
 
 	def iter_values(self):
 		yield self.value
@@ -161,17 +182,17 @@ class Element(Value):
 	def on_element(self, element):
 		assert element.parent is not None
 		assert element.parent == self
-		element.define("parent", element.parent, readonly=True)
+		element.define("parent", element.parent, readonly=True, constant=True)
 
 	def on_ready(self):
 		# if self.parent is not None:
-		# 	self.define("parent", self.parent)
+		# 	self.define("parent", self.parent, readonly=True, constant=True)
 		pass
 
 	def on_created(self):
 		pass
 
-	def define(self, name, value, types=None, *, relative=None, readonly=False):
+	def define(self, name, value, types=None, *, relative=None, readonly=False, constant=False):
 		if name in self.properties:
 			raise ElementPropertyDefinedError(f"Property {name!r} is already defined")
 
@@ -186,9 +207,9 @@ class Element(Value):
 			assert self.parent is not None
 			relative = self.parent.get(relative)
 
-		self.properties[name] = ElementProperty(name, value, types, relative=relative, readonly=readonly)
+		self.properties[name] = ElementProperty(name, value, types, relative=relative, readonly=readonly, constant=constant)
 
-		if not readonly:
+		if not constant:
 			self.computed_properties[name] = ElementProperty(name, value, types, relative=relative, readonly=readonly)
 
 	def get(self, name):
@@ -219,6 +240,9 @@ class Element(Value):
 		if name is None:
 			return self
 		return self.get_computed(name).eval()
+
+	def is_constant(self):
+		return True
 
 	def __getattr__(self, name):
 		if name.startswith("p_"):

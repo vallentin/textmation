@@ -27,7 +27,7 @@ class Drawable(BaseDrawable):
 	def on_ready(self):
 		super().on_ready()
 
-		self.define("index", self.parent.children.index(self), readonly=True)
+		self.define("index", self.parent.children.index(self), readonly=True, constant=True)
 
 		self.define("x", 0, relative="width")
 		self.define("y", 0, relative="height")
@@ -143,14 +143,13 @@ class Text(Drawable):
 		self.set("x", Percentage(50))
 		self.set("y", Percentage(50))
 
-		self.define("text", "")
+		self.define("text", "", constant=True)
 
-		self.define("font", "arial")
+		self.define("font", "arial", constant=True)
 		self.define("font_size", 32)
 
-		# TODO: Use enums and add type checking
-		self.define("anchor", "Center")
-		self.define("alignment", "Left")
+		self.define("anchor", "Center", constant=True)
+		self.define("alignment", "Left", constant=True)
 
 		self.define("color", Vec4(255, 255, 255, 255))
 		self.define("fill", self.get("color"))

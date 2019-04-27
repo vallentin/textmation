@@ -6,7 +6,7 @@ from operator import attrgetter
 
 from .parser import parse, _units, Node, Create, Template, Name
 from .datatypes import Value, Number, String, Angle, AngleUnit, Time, TimeUnit, BinOp, UnaryOp, Call
-from .elements import Element, Scene, Percentage, ElementError, ElementPropertyDefinedError, ElementPropertyReadonlyError, CircularReferenceError
+from .elements import Element, Scene, Percentage, ElementError, ElementPropertyDefinedError, ElementPropertyReadonlyError, ElementPropertyConstantError, CircularReferenceError
 from .functions import functions
 
 
@@ -191,6 +191,8 @@ class SceneBuilder:
 		# 	raise self._create_error(f"{ex} in {self._element.__class__.__name__}", token=assign.token) from None
 		except ElementPropertyReadonlyError:
 			raise self._create_error(f"Cannot assign to readonly property {name!r} in {self._element.__class__.__name__}", token=assign.token) from None
+		except ElementPropertyConstantError as ex:
+			raise self._create_error(f"{ex} in {self._element.__class__.__name__}", token=assign.token) from None
 		except CircularReferenceError as ex:
 			paths = "\n".join(" -> ".join(map(attrgetter("name"), path)) for path in ex.paths)
 			raise self._create_error(f"{ex} in {self._element.__class__.__name__}", after=f"Paths:\n{paths}", token=assign.token) from None
