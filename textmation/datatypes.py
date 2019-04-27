@@ -65,6 +65,9 @@ class Value:
 	def eval(self):
 		return self
 
+	def fold(self):
+		return self
+
 	def is_constant(self):
 		raise NotImplementedError
 
@@ -971,6 +974,9 @@ class Expression(Value):
 	def eval(self):
 		raise NotImplementedError
 
+	def fold(self):
+		raise NotImplementedError
+
 	def is_constant(self):
 		raise NotImplementedError
 
@@ -1015,6 +1021,11 @@ class BinOp(Expression):
 		if self.op == "%":
 			return self.lhs.eval() % self.rhs.eval()
 
+	def fold(self):
+		if self.is_constant():
+			return self.eval()
+		return BinOp(self.op, self.lhs.fold(), self.rhs.fold())
+
 	def is_constant(self):
 		return self.lhs.is_constant() and self.rhs.is_constant()
 
@@ -1044,6 +1055,11 @@ class UnaryOp(Expression):
 	def eval(self):
 		return -self.operand.eval()
 
+	def fold(self):
+		if self.is_constant():
+			return self.eval()
+		return UnaryOp(self.op, self.operand.fold())
+
 	def is_constant(self):
 		return self.operand.is_constant()
 
@@ -1069,6 +1085,12 @@ class Call(Expression):
 
 	def eval(self):
 		return self.func(*(arg.eval() for arg in self.args))
+
+	def fold(self):
+		if self.is_constant():
+			return self.eval()
+		args = [arg.fold() for arg in self.args]
+		return Call(self.func, args)
 
 	def is_constant(self):
 		for arg in self.args:

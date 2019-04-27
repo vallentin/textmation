@@ -140,6 +140,11 @@ class ElementProperty(Value):
 	def eval(self):
 		return self.value.eval()
 
+	def fold(self):
+		if self.is_constant():
+			return self.eval()
+		return self
+
 	def is_constant(self):
 		if self.constant:
 			return True

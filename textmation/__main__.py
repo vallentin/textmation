@@ -11,6 +11,7 @@ from argparse import ArgumentParser
 
 from .parser import parse
 from .scenebuilder import SceneBuilder
+from .optimizations import optimize
 from .rasterizer import Image
 from .renderer import render_animation, calc_frame_count
 from .pretty import pretty_duration, pprint_ast, pprint_element
@@ -51,6 +52,10 @@ def run(input_filename, output_filename, *, save_frames=False, print_ast=False, 
 
 	builder = SceneBuilder()
 	scene = builder.build(tree)
+
+	print("Optimizing Scene...", flush=True)
+
+	scene = optimize(scene)
 
 	if print_scene:
 		pprint_element(scene)
