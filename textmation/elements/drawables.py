@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from enum import IntEnum, IntFlag, auto
+
 from ..datatypes import *
 from .element import Element, Percentage
 from .animation import Animation
@@ -136,6 +138,26 @@ class Line(Drawable):
 		self.set("width", 1)
 
 
+@register_flag
+class TextAnchor(IntFlag):
+	Left = 1
+	CenterX = 2
+	Right = 4
+	Top = 8
+	CenterY = 16
+	Bottom = 32
+	Center = CenterX | CenterY
+	Default = Center
+
+
+@register_enum
+class TextAlignment(IntEnum):
+	Left = auto()
+	Center = auto()
+	Right = auto()
+	Default = Left
+
+
 class Text(Drawable):
 	def on_ready(self):
 		super().on_ready()
@@ -148,8 +170,8 @@ class Text(Drawable):
 		self.define("font", "arial", constant=True)
 		self.define("font_size", 32)
 
-		self.define("anchor", "Center", constant=True)
-		self.define("alignment", "Left", constant=True)
+		self.define("anchor", TextAnchor.Default, constant=True)
+		self.define("alignment", TextAlignment.Default, constant=True)
 
 		self.define("color", Vec4(255, 255, 255, 255))
 		self.define("fill", self.get("color"))

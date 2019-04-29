@@ -3,7 +3,7 @@
 
 from itertools import chain
 from operator import attrgetter
-from enum import Enum, IntEnum, IntFlag
+from enum import IntEnum
 
 from PIL import Image as _Image
 from PIL import ImageDraw as _ImageDraw
@@ -11,6 +11,7 @@ from PIL import ImageFont as _ImageFont
 
 from .datatypes import Vec2, Vec4, Color
 from .datatypes import Point, Size, Rect
+from .elements import TextAnchor, TextAlignment
 
 
 _fonts = {}
@@ -19,22 +20,6 @@ _fonts = {}
 class ResamplingFilter(IntEnum):
 	Nearest = _Image.NEAREST
 	Bilinear = _Image.BILINEAR
-
-
-class Anchor(IntFlag):
-	Left = 1
-	CenterX = 2
-	Right = 4
-	Top = 8
-	CenterY = 16
-	Bottom = 32
-	Center = CenterX | CenterY
-
-
-class Alignment(Enum):
-	Left = "left"
-	Center = "center"
-	Right = "right"
 
 
 def _is_opaque(image):
@@ -260,12 +245,13 @@ class Image:
 			draw.line((x, y, x2, y2), fill=tuple(map(int, fill)), width=int(width))
 			self._image = _Image.alpha_composite(self._image, image)
 
-	def draw_text(self, text, position, fill, font, anchor=Anchor.Center, alignment=Alignment.Left):
+	def draw_text(self, text, position, fill, font, anchor=TextAnchor.Default, alignment=TextAlignment.Default):
 		assert isinstance(text, str)
 		assert isinstance(position, (Vec2, Point))
 		assert isinstance(fill, (Vec4, Color))
 		assert isinstance(font, Font)
-		assert isinstance(alignment, Alignment)
+		assert isinstance(anchor, TextAnchor)
+		assert isinstance(alignment, TextAlignment)
 
 		if fill.a == 0:
 			return
@@ -275,15 +261,19 @@ class Image:
 
 		x, y = position
 
-		if anchor & Anchor.CenterX:
-			x -= (text_width + text_offset_x) / 2
-		elif anchor & Anchor.Right:
+		if anchor & TextAnchor.Left:
+			pass # Used to make CenterX default
+		elif anchor & TextAnchor.Right:
 			x -= text_width + text_offset_x
+		else: # elif anchor & TextAnchor.CenterX:
+			x -= (text_width + text_offset_x) / 2
 
-		if anchor & Anchor.CenterY:
-			y -= (text_height + text_offset_y) / 2
-		elif anchor & Anchor.Bottom:
+		if anchor & TextAnchor.Top:
+			pass # Used to make CenterY default
+		elif anchor & TextAnchor.Bottom:
 			y -= text_height + text_offset_y
+		else: # elif anchor & TextAnchor.CenterY:
+			y -= (text_height + text_offset_y) / 2
 
 		position = x, y
 

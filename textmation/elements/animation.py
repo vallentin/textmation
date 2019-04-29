@@ -6,7 +6,7 @@ from functools import total_ordering
 from math import isinf
 from enum import IntEnum
 
-from ..datatypes import Time, TimeUnit
+from ..datatypes import Time, TimeUnit, register_enum
 from .element import Element, ElementError
 
 
@@ -44,6 +44,7 @@ def ping_pong(value, lower=0, upper=1):
 		return lower + ping_ponged
 
 
+@register_enum
 class AnimationDirection(IntEnum):
 	Normal           = 1
 	Reverse          = 2
@@ -52,6 +53,7 @@ class AnimationDirection(IntEnum):
 	Default          = Normal
 
 
+@register_enum
 class AnimationFillMode(IntEnum):
 	Never   = 1
 	After   = 2
@@ -76,9 +78,8 @@ class Animation(Element):
 
 		self.define("iterations", 1, constant=True)
 
-		# TODO: Use enums and add type checking
-		self.define("direction", AnimationDirection.Default.name, constant=True)
-		self.define("fill_mode", AnimationFillMode.Default.name, constant=True)
+		self.define("direction", AnimationDirection.Default, constant=True)
+		self.define("fill_mode", AnimationFillMode.Default, constant=True)
 
 	def on_created(self):
 		super().on_created()
@@ -193,11 +194,11 @@ class Animation(Element):
 
 	@property
 	def direction(self):
-		return AnimationDirection[self.p_direction]
+		return self.p_direction
 
 	@property
 	def fill_mode(self):
-		return AnimationFillMode[self.p_fill_mode]
+		return self.p_fill_mode
 
 	def get_between(self, time):
 		first = self.keyframes[0]

@@ -20,7 +20,7 @@ template Slide inherit Rectangle
 		y = 50%
 
 	create Animation
-		fill_mode = "After"
+		fill_mode = After
 		create Keyframe
 			time = 0s
 			x = -100%

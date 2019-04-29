@@ -10,7 +10,6 @@ import sys
 
 from .datatypes import Point, Size, Rect
 from .rasterizer import Image, Font
-from .rasterizer import Anchor, Alignment
 from .elements import Element, Scene
 from .utilities import iter_all_superclasses
 
@@ -128,11 +127,7 @@ class Renderer:
 		font = Font.load(text.p_font, text.p_font_size)
 		position = Point(text.p_x, text.p_y)
 
-		# anchor = Anchor[text.p_anchor]
-		anchor = reduce(operator.ior, map(Anchor.__getitem__, map(str.strip, text.p_anchor.split("|"))))
-		alignment = Alignment[text.p_alignment]
-
-		self._image.draw_text(text.p_text, self.translation + position, text.p_fill, font, anchor, alignment)
+		self._image.draw_text(text.p_text, self.translation + position, text.p_fill, font, text.p_anchor, text.p_alignment)
 
 		# TODO: Translate?
 		self._render_children(text)
