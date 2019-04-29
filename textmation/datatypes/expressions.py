@@ -20,7 +20,7 @@ class Expression(Value):
 
 class BinOp(Expression):
 	def __init__(self, op, lhs, rhs):
-		assert op in ("+", "-", "*", "/", "//", "%")
+		assert op in ("+", "-", "*", "/", "//", "%", "&", "|")
 		assert isinstance(lhs, Value)
 		assert isinstance(rhs, Value)
 		self.op, self.lhs, self.rhs = op, lhs, rhs
@@ -40,6 +40,11 @@ class BinOp(Expression):
 			return self.lhs.type // self.rhs.type
 		if self.op == "%":
 			return self.lhs.type % self.rhs.type
+		if self.op == "&":
+			return self.lhs.type & self.rhs.type
+		if self.op == "|":
+			return self.lhs.type | self.rhs.type
+		raise NotImplementedError
 
 	def eval(self):
 		if self.op == "+":
@@ -54,6 +59,11 @@ class BinOp(Expression):
 			return self.lhs.eval() // self.rhs.eval()
 		if self.op == "%":
 			return self.lhs.eval() % self.rhs.eval()
+		if self.op == "&":
+			return self.lhs.eval() & self.rhs.eval()
+		if self.op == "|":
+			return self.lhs.eval() | self.rhs.eval()
+		raise NotImplementedError
 
 	def fold(self):
 		if self.is_constant():

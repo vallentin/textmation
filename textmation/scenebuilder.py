@@ -5,7 +5,7 @@ from contextlib import contextmanager, suppress
 from operator import attrgetter
 
 from .parser import parse, _units, Node, Create, Template, Name
-from .datatypes import Value, Number, String, Angle, AngleUnit, Time, TimeUnit, BinOp, UnaryOp, Call
+from .datatypes import Value, EnumType, FlagType, String, Number, Angle, AngleUnit, Time, TimeUnit, BinOp, UnaryOp, Call
 from .elements import Element, Scene, Percentage, ElementError, ElementPropertyDefinedError, ElementPropertyReadonlyError, ElementPropertyConstantError, CircularReferenceError
 from .functions import functions
 
@@ -18,6 +18,7 @@ class SceneBuilder:
 	def __init__(self):
 		self.templates = None
 		self._elements = None
+		self._types = None
 
 	@property
 	def _element(self):
@@ -28,6 +29,16 @@ class SceneBuilder:
 		self._elements.append(element)
 		yield
 		assert self._elements.pop() is element
+
+	@property
+	def _type(self):
+		return self._types[-1]
+
+	@contextmanager
+	def _push_type(self, type):
+		self._types.append(type)
+		yield
+		assert self._types.pop() is type
 
 	def _get_template(self, name, *, token=None):
 		try:
@@ -93,10 +104,14 @@ class SceneBuilder:
 
 			self.templates = dict((template.__name__, template) for template in Element.list_element_types())
 			self._elements = []
+			self._types = []
 
 			scene = self._build(string)
 
 			assert isinstance(scene, Scene)
+
+			self._elements = None
+			self._types = None
 
 			return scene
 
@@ -176,15 +191,20 @@ class SceneBuilder:
 		assert isinstance(name, Name)
 		name = name.name
 
-		value = self._build(assign.value)
+		try:
+			type = self._element.get(name).types[0]
+		except KeyError:
+			raise self._create_error(f"Assigning value to undefined property {name!r} in {self._element.__class__.__name__}", token=assign.token) from None
 
-		assert isinstance(name, str)
+		with self._push_type(type):
+			value = self._build(assign.value)
+
 		assert isinstance(value, Value)
 
 		try:
 			self._element.set(name, value)
-		except KeyError:
-			raise self._create_error(f"Assigning value to undefined property {name!r} in {self._element.__class__.__name__}", token=assign.token) from None
+		# except KeyError:
+		# 	raise self._create_error(f"Assigning value to undefined property {name!r} in {self._element.__class__.__name__}", token=assign.token) from None
 		except TypeError as ex:
 			raise self._create_error(f"{ex} in {self._element.__class__.__name__}", token=assign.token) from None
 		# except ElementPropertyReadonlyError as ex:
@@ -248,4 +268,9 @@ class SceneBuilder:
 
 	def _build_Name(self, name):
 		assert len(name.children) == 0
+
+		with suppress(IndexError, KeyError):
+			if isinstance(self._type, (EnumType, FlagType)):
+				return self._type.enum[name.name].box()
+
 		return self._get_property(self._element, name.name, token=name.token)

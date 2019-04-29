@@ -377,7 +377,14 @@ class Parser:
 		return Name(name, token=token)
 
 	def _parse_rvalue(self):
-		return self._parse_additive()
+		return self._parse_bitwise_or()
+
+	def _parse_bitwise_or(self):
+		result = self._parse_additive()
+		while self._peek_if(TokenType.Symbol, "|"):
+			token = self._next()
+			result = BinOp(token.value, result, self._parse_additive(), token=token)
+		return result
 
 	def _parse_additive(self):
 		result = self._parse_multiplicative()

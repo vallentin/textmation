@@ -245,6 +245,12 @@ class Keyframe(Element):
 		# So don't compute anything
 		pass
 
+	def get(self, name):
+		if name in self.properties:
+			return super().get(name)
+		else:
+			return self.animation.element.get(name)
+
 	def set(self, name, value):
 		if name in self.properties:
 			super().set(name, value)
