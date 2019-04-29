@@ -3,6 +3,7 @@
 
 from contextlib import contextmanager, suppress
 from operator import attrgetter
+import enum
 
 from ..datatypes import Type, Value, Number, String
 from ..utilities import iter_all_subclasses
@@ -68,7 +69,7 @@ def find_cycles(value):
 class ElementProperty(Value):
 	def __init__(self, name, value, types=None, *, relative=None, readonly=False, constant=False):
 		assert isinstance(name, str)
-		assert isinstance(value, Value)
+		assert isinstance(value, (Value, enum.Enum))
 
 		if types is None:
 			types = value.type,
@@ -201,7 +202,9 @@ class Element(Value):
 		if name in self.properties:
 			raise ElementPropertyDefinedError(f"Property {name!r} is already defined")
 
-		if isinstance(value, (int, float)):
+		if isinstance(value, enum.Enum):
+			value = value.box()
+		elif isinstance(value, (int, float)):
 			value = Number(value)
 		elif isinstance(value, str):
 			value = String(value)

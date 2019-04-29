@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from .base import *
+from .enum import *
 from .string import *
 from .scalars import *
 from .vectors import *

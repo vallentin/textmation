@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from functools import total_ordering
-from enum import Enum
+from enum import Enum as _Enum
 import math
 
 from .base import *
@@ -160,7 +160,7 @@ class _Angle(Type):
 AngleType = _Angle()
 
 
-class AngleUnit(Enum):
+class AngleUnit(_Enum):
 	Degrees = "deg"
 	Radians = "rad"
 	Turns = "turn"
@@ -274,7 +274,7 @@ class _Time(Type):
 TimeType = _Time()
 
 
-class TimeUnit(Enum):
+class TimeUnit(_Enum):
 	Seconds = "s"
 	Milliseconds = "ms"
 
