@@ -9,7 +9,7 @@ from io import StringIO
 import sys
 
 from .datatypes import Point, Size, Rect
-from .rasterizer import Image, Font
+from .rasterizer import Image, Font, ResamplingFilter
 from .elements import Element, Scene
 from .utilities import iter_all_superclasses
 
@@ -122,6 +122,15 @@ class Renderer:
 
 		# TODO: Translate to p1, p2, min(p1, p2) or at all?
 		self._render_children(line)
+
+	def _render_Image(self, image):
+		bounds = Rect(image.p_x, image.p_y, image.p_width, image.p_height)
+		_image = Image.load(image.p_filename)
+
+		self._image.paste(_image, bounds + self.translation, alpha_composite=True, filter=ResamplingFilter.Bilinear)
+
+		with self.translate(bounds.position):
+			self._render_children(image)
 
 	def _render_Text(self, text):
 		font = Font.load(text.p_font, text.p_font_size)

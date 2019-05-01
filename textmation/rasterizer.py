@@ -14,6 +14,7 @@ from .datatypes import Point, Size, Rect
 from .elements import TextAnchor, TextAlignment
 
 
+_images = {}
 _fonts = {}
 
 
@@ -45,9 +46,14 @@ class Image:
 
 	@staticmethod
 	def load(filename):
-		image = _Image.open(filename)
-		image.load()
-		return Image(image)
+		try:
+			return _images[filename]
+		except KeyError:
+			image = _Image.open(filename)
+			image.load()
+			image = Image(image)
+			_images[filename] = image
+			return image
 
 	@staticmethod
 	def save_gif(filename, frames, frame_rate):
@@ -110,12 +116,16 @@ class Image:
 			bounds = Rect(bounds)
 		assert isinstance(bounds, Rect)
 
-		if image.size != bounds.size:
-			image = image.resized(bounds.size, filter)
+		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
+		size = Size(x2 - x, y2 - y)
+
+		if size.area <= 0:
+			return
+
+		if image.size != size:
+			image = image.resized(size, filter)
 
 		alpha_composite = alpha_composite and not image.opaque
-
-		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
 
 		if alpha_composite:
 			_image = _Image.new("RGBA", tuple(self.size), (0, 0, 0, 0))

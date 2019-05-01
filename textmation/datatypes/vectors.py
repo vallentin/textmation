@@ -154,6 +154,12 @@ class Vec2(Value):
 	def __neg__(self):
 		return Vec2(-self.x, -self.y)
 
+	def __eq__(self, other):
+		if isinstance(other, Vec2):
+			return self.x == other.x and \
+			       self.y == other.y
+		return NotImplemented
+
 	def __iter__(self):
 		yield from self.xy
 
@@ -268,6 +274,13 @@ class Vec3(Value):
 
 	def __neg__(self):
 		return Vec3(-self.x, -self.y, -self.z)
+
+	def __eq__(self, other):
+		if isinstance(other, Vec3):
+			return self.x == other.x and \
+			       self.y == other.y and \
+			       self.z == other.z
+		return NotImplemented
 
 	def __iter__(self):
 		yield from self.xyz
@@ -405,6 +418,14 @@ class Vec4(Value):
 
 	def __neg__(self):
 		return Vec4(-self.x, -self.y, -self.z, -self.w)
+
+	def __eq__(self, other):
+		if isinstance(other, Vec4):
+			return self.x == other.x and \
+			       self.y == other.y and \
+			       self.z == other.z and \
+			       self.w == other.w
+		return NotImplemented
 
 	def __iter__(self):
 		yield from self.xyzw

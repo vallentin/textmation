@@ -138,6 +138,13 @@ class Line(Drawable):
 		self.set("width", 1)
 
 
+class Image(Drawable):
+	def on_ready(self):
+		super().on_ready()
+
+		self.define("filename", "", constant=True)
+
+
 @register_flag
 class TextAnchor(IntFlag):
 	Left = 1

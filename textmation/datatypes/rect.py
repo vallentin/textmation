@@ -98,10 +98,18 @@ class Rect(Value):
 		return NotImplemented
 
 	def __rsub__(self, other):
+		if isinstance(other, Vec2):
+			return Rect(other - self.position, self.size)
 		if isinstance(other, Number):
 			return Rect(other - self.position, self.size)
 		if isinstance(other, (int, float)):
 			return Vec2(other) - self
+		return NotImplemented
+
+	def __eq__(self, other):
+		if isinstance(other, Rect):
+			return self.position == other.position and \
+			       self.size == other.size
 		return NotImplemented
 
 	def __repr__(self):
