@@ -71,6 +71,8 @@ class Image:
 
 	def __init__(self, image):
 		self._image = image
+		self._size = Size(*image.size)
+		self._bounds = Rect(self._size)
 		self._opaque = None
 
 	@property
@@ -116,6 +118,9 @@ class Image:
 			bounds = Rect(bounds)
 		assert isinstance(bounds, Rect)
 
+		if not self._bounds.intersects(bounds):
+			return
+
 		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
 		size = Size(x2 - x, y2 - y)
 
@@ -140,6 +145,9 @@ class Image:
 		assert isinstance(outline, (Vec4, Color))
 
 		if fill.a == 0 and outline.a == 0:
+			return
+
+		if not self._bounds.intersects(bounds):
 			return
 
 		x, y, x2, y2 = map(int, chain(bounds.min, bounds.max))
@@ -182,6 +190,9 @@ class Image:
 
 		x, y, x2, y2 = center.x - radius_x, center.y - radius_y, center.x + radius_x, center.y + radius_y
 
+		if not self._bounds.intersects(Rect(min(x, x2), min(y, y2), max(x, x2) - min(x, x2), max(y, y2) - min(y, y2))):
+			return
+
 		fill = tuple(map(int, fill))
 		outline = tuple(map(int, outline))
 
@@ -215,6 +226,9 @@ class Image:
 
 		x, y, x2, y2 = center.x - radius_x, center.y - radius_y, center.x + radius_x, center.y + radius_y
 
+		if not self._bounds.intersects(Rect(min(x, x2), min(y, y2), max(x, x2) - min(x, x2), max(y, y2) - min(y, y2))):
+			return
+
 		fill = tuple(map(int, fill))
 		outline = tuple(map(int, outline))
 
@@ -245,6 +259,10 @@ class Image:
 			return
 
 		x, y, x2, y2 = p1.x, p1.y, p2.x, p2.y
+
+		# if not self._bounds.intersects(Rect(min(x, x2), min(y, y2), max(x, x2) - min(x, x2), max(y, y2) - min(y, y2))):
+		if not self._bounds.intersects(Rect(min(x, x2) - width, min(y, y2) - width, max(x, x2) - min(x, x2) + width, max(y, y2) - min(y, y2) + width)):
+			return
 
 		if fill.a == 255:
 			draw = _ImageDraw.Draw(self._image, "RGBA")
@@ -284,6 +302,9 @@ class Image:
 			y -= text_height + text_offset_y
 		else: # elif anchor & TextAnchor.CenterY:
 			y -= (text_height + text_offset_y) / 2
+
+		if not self._bounds.intersects(Rect(x, y, text_width, text_height)):
+			return
 
 		position = x, y
 

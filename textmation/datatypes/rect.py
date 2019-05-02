@@ -74,6 +74,53 @@ class Rect(Value):
 	def max(self):
 		return Point(*(self.position + self.size))
 
+	def contains(self, other):
+		(left, top), (right, bottom) = self.min, self.max
+
+		if isinstance(other, Rect):
+			(left2, top2), (right2, bottom2) = other.min, other.max
+			return (left <= left2) and \
+			       (right >= right2) and \
+			       (top <= top2) and \
+			       (bottom >= bottom2)
+		elif isinstance(other, (Vec2, Point)):
+			x, y = other
+			# return (left >= x) and \
+			#        (right <= x) and \
+			#        (bottom >= y) and \
+			#        (top <= y)
+			return left <= x <= right and top <= y <= bottom
+		else:
+			raise NotImplementedError
+
+	def intersects(self, other):
+		assert isinstance(other, Rect)
+
+		(left1, top1), (right1, bottom1) = self.min, self.max
+		(left2, top2), (right2, bottom2) = other.min, other.max
+
+		# return (left1 <= right2) and \
+		#        (left2 <= right1) and \
+		#        (top1 <= bottom2) and \
+		#        (top2 <= bottom1)
+
+		return (left1 < right2) and \
+		       (left2 < right1) and \
+		       (top1 < bottom2) and \
+		       (top2 < bottom1)
+
+	def intersected(self, other):
+		assert isinstance(other, Rect)
+
+		(left1, top1), (right1, bottom1) = self.min, self.max
+		(left2, top2), (right2, bottom2) = other.min, other.max
+
+		x1, y1 = max(left1, left2), max(top1, top2)
+		x2, y2 = min(right1, right2), min(bottom1, bottom2)
+		w, h = x2 - x1, y2 - y1
+
+		return Rect(x1, y1, w, h)
+
 	def is_constant(self):
 		return True
 
