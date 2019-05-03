@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from functools import wraps
+import colorsys
 
 from .datatypes import *
 
@@ -77,11 +78,22 @@ def function(*args):
 	return decorator
 
 
-@function((Number, Number, Number), Vec3)
+@function((Number, Number, Number), Color)
 def rgb(r, g, b):
-	return Vec3(r.value, g.value, b.value)
+	return Color(r.value, g.value, b.value)
 
 
-@function((Number, Number, Number, Number), Vec4)
+@function((Number, Number, Number, Number), Color)
 def rgba(r, g, b, a):
-	return Vec4(r.value, g.value, b.value, a.value)
+	return Color(r.value, g.value, b.value, a.value)
+
+
+@function((Number, Number, Number), Color)
+def hsl(h, s, l):
+	r, g, b = colorsys.hls_to_rgb(h.value, l.value, s.value)
+
+	r *= 255
+	g *= 255
+	b *= 255
+
+	return Color(r, g, b)
