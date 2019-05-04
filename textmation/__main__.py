@@ -94,6 +94,24 @@ def run(input_filename, output_filename, *, save_frames=False, print_ast=False, 
 	print(f"Rendered in {pretty_duration(ceil(duration))}")
 
 
+def try_run(input_filename, output_filename, *, save_frames=False, verbose=False, print_ast=False, print_scene=False):
+	try:
+		run(input_filename, output_filename, save_frames=save_frames, print_ast=print_ast, print_scene=print_scene)
+		return 0
+	except Exception as ex:
+		sys.stdout.flush()
+		time.sleep(0.1)
+
+		if verbose or "PYCHARM_HOSTED" in os.environ:
+			import traceback
+			print(traceback.format_exc(), file=sys.stderr)
+		else:
+			print(f"{type(ex).__name__}: {ex}", file=sys.stderr)
+
+		# TODO: Add more error codes based on the type of exception
+		return 1
+
+
 def main():
 	args_parser = ArgumentParser()
 	args_parser.add_argument("-o", "--output", default="output.gif", help="Output filename")
@@ -101,11 +119,12 @@ def main():
 	args_parser.add_argument("--save-frames", action="store_const", const=True, default=False)
 	args_parser.add_argument("--print-ast", action="store_const", const=True, default=False)
 	args_parser.add_argument("--print-scene", action="store_const", const=True, default=False)
+	args_parser.add_argument("--verbose", action="store_const", const=True, default=False)
 
 	args = args_parser.parse_args()
 
-	run(args.filename, args.output, save_frames=args.save_frames, print_ast=args.print_ast, print_scene=args.print_scene)
+	return try_run(args.filename, args.output, save_frames=args.save_frames, verbose=args.verbose, print_ast=args.print_ast, print_scene=args.print_scene)
 
 
 if __name__ == "__main__":
-	main()
+	exit(main())
