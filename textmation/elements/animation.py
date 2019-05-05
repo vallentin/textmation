@@ -10,6 +10,14 @@ from ..datatypes import Time, TimeUnit, register_enum
 from .element import Element, ElementError
 
 
+def even(x):
+	return x % 2 == 0
+
+
+def odd(x):
+	return x % 2 == 1
+
+
 def is_int(x):
 	if isinstance(x, int):
 		return True
@@ -110,32 +118,34 @@ class Animation(Element):
 		if not self.is_affecting(time):
 			return
 
-		time = max(time - self.p_delay.seconds, 0)
+		time -= self.p_delay.seconds
 
-		is_after = not self.infinite_iterations and time >= self.duration
-
-		if not self.infinite_iterations:
-			time = min(time, self.duration)
-
-		if self.direction in (AnimationDirection.Normal, AnimationDirection.Reverse):
-			time %= self.iteration_duration
-			if self.direction == AnimationDirection.Reverse:
-				time = self.iteration_duration - time
-		elif self.direction == AnimationDirection.Alternate:
-			time = ping_pong(time, 0, self.iteration_duration)
-		elif self.direction == AnimationDirection.AlternateReverse:
-			time = ping_pong(time + self.iteration_duration, 0, self.iteration_duration)
-
-		before, after = self.get_between(time)
+		is_after = not self.infinite_iterations and time >= self._end_time
 
 		if is_after and is_int(self.iterations):
-			if self.fill_mode in (AnimationFillMode.After, AnimationFillMode.Always):
-				if self.direction == AnimationDirection.Normal:
-					after = self.keyframes[-1]
-					before = after
-				elif self.direction == AnimationDirection.Reverse:
-					after = self.keyframes[0]
-					before = after
+			if self.direction == AnimationDirection.Normal:
+				time = self._end_time
+			if self.direction == AnimationDirection.Reverse:
+				time = self._begin_time
+			if self.direction == AnimationDirection.Alternate:
+				time = self._end_time if odd(self.iterations) else self._begin_time
+			if self.direction == AnimationDirection.AlternateReverse:
+				time = self._end_time if even(self.iterations) else self._begin_time
+		elif time >= self._begin_time:
+			time -= self._begin_time
+
+			if self.direction in (AnimationDirection.Normal, AnimationDirection.Reverse):
+				time %= self.iteration_duration
+				if self.direction == AnimationDirection.Reverse:
+					time = self.iteration_duration - time
+			elif self.direction == AnimationDirection.Alternate:
+				time = ping_pong(time, 0, self.iteration_duration)
+			elif self.direction == AnimationDirection.AlternateReverse:
+				time = ping_pong(time + self.iteration_duration, 0, self.iteration_duration)
+
+			time += self._begin_time
+
+		before, after = self.get_between(time)
 
 		if before == after:
 			for name in self.element_properties:
@@ -166,8 +176,20 @@ class Animation(Element):
 		return self.end_time - self.begin_time
 
 	@property
+	def _begin_time(self):
+		return self.keyframes[0].time.seconds
+
+	@property
 	def begin_time(self):
 		return (self.keyframes[0].time + self.p_delay).seconds
+
+	@property
+	def _end_time(self):
+		# return self.begin_time + self.duration
+		iterations = self.p_iterations
+		if isinf(iterations):
+			return self._begin_time
+		return self._begin_time + self.iteration_duration * iterations
 
 	@property
 	def end_time(self):
