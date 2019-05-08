@@ -3,11 +3,17 @@
 
 from contextlib import contextmanager, suppress
 from operator import attrgetter
+import os
+from os.path import abspath, dirname, join, isfile
 
-from .parser import parse, _units, Node, Create, Template, Name
+from .parser import parse, _units, Node, Include, Create, Template, Name
 from .datatypes import Value, EnumType, FlagType, String, Number, Angle, AngleUnit, Time, TimeUnit, BinOp, UnaryOp, Call
 from .elements import Element, Scene, Percentage, ElementError, ElementPropertyDefinedError, ElementPropertyReadonlyError, ElementPropertyConstantError, CircularReferenceError
 from .functions import functions
+
+
+_scenes_dir = abspath(join(dirname(__file__), os.pardir, "scenes"))
+_ext = ".anim"
 
 
 class SceneBuilderError(Exception):
@@ -19,6 +25,10 @@ class SceneBuilder:
 		self.templates = None
 		self._elements = None
 		self._types = None
+		# TODO: Change this to an ordered set to avoid duplicates
+		self.search_paths = [_scenes_dir]
+		self._including = []
+		self._included = set()
 
 	@property
 	def _element(self):
@@ -81,6 +91,7 @@ class SceneBuilder:
 
 	@staticmethod
 	def _create_error(message, *, after=None, token=None):
+		# TODO: Include filename in the error
 		if token is not None:
 			begin, end = token.span
 			if after:
@@ -94,6 +105,43 @@ class SceneBuilder:
 
 	def _fail(self, message, *, after=None, token=None):
 		raise self._create_error(message, after=after, token=token)
+
+	def _find_scene_file(self, path):
+		_path = path
+
+		path = join(*path) + _ext
+		for dirpath in reversed(self.search_paths):
+			filename = join(dirpath, path)
+			if isfile(filename):
+				return filename
+
+		paths = "\n".join(f"- {join(dirpath, path)}" for dirpath in reversed(self.search_paths))
+		raise FileNotFoundError(f"Failed including {'.'.join(_path)}\nTried...\n{paths}")
+
+	def _is_including(self):
+		return len(self._including) > 0
+
+	def _include(self, filename):
+		filename = abspath(filename)
+
+		if filename in self._including:
+			return
+		if filename in self._included:
+			return
+
+		self.search_paths.append(dirname(filename))
+
+		self._including.append(filename)
+
+		with open(filename) as f:
+			string = f.read()
+
+		self._build(parse(string))
+
+		self._including.pop()
+		self._included.add(filename)
+
+		self.search_paths.pop()
 
 	def build(self, string):
 		if isinstance(string, str):
@@ -124,6 +172,24 @@ class SceneBuilder:
 	def _build_children(self, node):
 		for child in node.children:
 			yield self._build(child)
+
+	def _build_Include(self, include):
+		try:
+			include_filename = self._find_scene_file(include.path)
+		except FileNotFoundError as ex:
+			message, after = str(ex).partition("\n")[0::2]
+			raise self._create_error(message, after=after, token=include.token) from None
+
+		self._include(include_filename)
+
+	def _build_Scene(self, scene):
+		if not self._is_including():
+			return self._build_Create(scene)
+
+		for child in scene.children:
+			if isinstance(child, (Include, Template)):
+				result = self._build(child)
+				assert result is None
 
 	def _build_Create(self, create):
 		if create.name:

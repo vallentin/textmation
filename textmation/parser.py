@@ -8,7 +8,7 @@ import re
 from .lexer import Lexer, TokenType
 
 
-_keywords = "create", "as", "template", "inherit"
+_keywords = "create", "as", "template", "inherit", "include"
 _literals = "true", "false", "infinite"
 _units    = "%", "px", "s", "ms", "deg", "rad", "turn"
 
@@ -32,6 +32,16 @@ class Node:
 		return f"<{self.__class__.__name__}>"
 
 
+class Include(Node):
+	def __init__(self, path, *, token=None):
+		super().__init__(token=token)
+		self.path = path
+
+	def __repr__(self):
+		# return f"<{self.__class__.__name__}: {self.path}>"
+		return f"<{self.__class__.__name__}: {'.'.join(self.path)}>"
+
+
 class Create(Node):
 	def __init__(self, element, name=None, *, token=None):
 		super().__init__(token=token)
@@ -43,6 +53,11 @@ class Create(Node):
 			return f"<{self.__class__.__name__}: {self.element}, {self.name}>"
 		else:
 			return f"<{self.__class__.__name__}: {self.element}>"
+
+
+class Scene(Create):
+	def __init__(self, name=None, *, token=None):
+		super().__init__("Scene", name=name, token=token)
 
 
 class Template(Node):
@@ -303,9 +318,20 @@ class Parser:
 		return scene
 
 	def _parse_scene(self):
-		scene = Create("Scene")
+		# scene = Create("Scene")
+		# scene = Create("Scene", token=self._peek())
+		scene = Scene()
 		scene.extend(self._parse_body_elements(allow_template=True))
 		return scene
+
+	def _parse_include(self):
+		token = self._expect_token(TokenType.Identifier, "include")
+
+		path = [self._next_name()]
+		while self._next_if(TokenType.Symbol, "."):
+			path.append(self._next_name())
+
+		return Include(path, token=token)
 
 	def _parse_create(self):
 		self._expect_token(TokenType.Identifier, "create")
@@ -354,6 +380,10 @@ class Parser:
 				if not allow_template:
 					self._fail("Template not allowed", token=self._peek())
 				body.append(self._parse_template())
+			elif self._peek_if(TokenType.Identifier, "include"):
+				if not allow_template:
+					self._fail("Include not allowed", token=self._peek())
+				body.append(self._parse_include())
 			elif self._peek_if(TokenType.Identifier):
 				body.append(self._parse_assignment())
 			else:

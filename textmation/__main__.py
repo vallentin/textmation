@@ -51,6 +51,7 @@ def run(input_filename, output_filename, *, save_frames=False, print_ast=False, 
 	print("Building Scene...", flush=True)
 
 	builder = SceneBuilder()
+	builder.search_paths.append(dirname(abspath(input_filename)))
 	scene = builder.build(tree)
 
 	print("Optimizing Scene...", flush=True)
