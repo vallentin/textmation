@@ -44,6 +44,33 @@ impl Image {
         }
     }
 
+    pub fn get_pixel(&self, x: usize, y: usize) -> &Color {
+        &self.data[x + y * self.width as usize]
+    }
+
+    pub fn get_pixel_mut(&mut self, x: usize, y: usize) -> &mut Color {
+        &mut self.data[x + y * self.width as usize]
+    }
+
+    pub fn set_pixel(&mut self, x: usize, y: usize, pixel: Color) {
+        *self.get_pixel_mut(x, y) = pixel;
+    }
+
+    pub fn set_pixel_blend(&mut self, x: usize, y: usize, pixel: Color) {
+        let p = self.get_pixel_mut(x, y);
+
+        if pixel.3 == 255 {
+            *p = pixel;
+        } else {
+            *p = p.blend(pixel);
+        }
+    }
+
+    pub fn contains(&self, x: usize, y: usize) -> bool {
+        (x < self.width as usize) &&
+        (y < self.height as usize)
+    }
+
     pub fn save(&self, filename: &Path) {
         let size = self.width as usize * self.height as usize * 4usize;
 
@@ -103,6 +130,48 @@ impl Image {
                 for x in x..x2 {
                     self.data[x + y * h] = self.data[x + y * h].blend(fill);
                 }
+            }
+        }
+    }
+
+    // Bresenham's line algorithm
+    pub fn draw_line(&mut self, line: (i32, i32, i32, i32), color: Color) {
+        if color.3 == 0 {
+            return;
+        }
+
+        let (mut x0, mut y0, x1, y1) = line;
+
+        let dx =  (x1 - x0).abs();
+        let dy = -(y1 - y0).abs();
+
+        let sx = if x0 < x1 { 1 } else { -1 };
+        let sy = if y0 < y1 { 1 } else { -1 };
+
+        let mut err = dx + dy;
+        let mut err2;
+
+        loop {
+            let (x, y) = (x0 as usize, y0 as usize);
+
+            if self.contains(x, y) {
+                self.set_pixel_blend(x, y, color);
+            }
+
+            if (x0 == x1) && (y0 == y1) {
+                break;
+            }
+
+            err2 = err * 2;
+
+            if err2 >= dy {
+                err += dy;
+                x0 += sx;
+            }
+
+            if err2 <= dx {
+                err += dx;
+                y0 += sy;
             }
         }
     }

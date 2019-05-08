@@ -42,4 +42,10 @@ py_class!(class TImage |py| {
 
         Ok(py.None())
     }
+
+    def draw_line(&self, line: (i32, i32, i32, i32), color: (u8, u8, u8, u8)) -> PyResult<PyObject> {
+        self.img(py).borrow_mut().draw_line(line, Color(color.0, color.1, color.2, color.3));
+
+        Ok(py.None())
+    }
 });
