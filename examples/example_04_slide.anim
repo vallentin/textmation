@@ -1,17 +1,19 @@
 
-width = 400
-height = 300
+include slide
 
-background = rgba(20, 21, 24, 255)
-
-frame_rate = 40
-
-template Slide inherit Rectangle
-	text := "Slide"
+template MySlide inherit Rectangle
+	fill = hsla(index / 3, 0.5, 0.5, 150)
 
 	enter := 0s
 	exit := enter + 2s
 	transition_duration := 750ms
+
+	text := "Slide"
+
+	create Slide
+		enter = parent.enter
+		exit = parent.exit
+		transition_duration = parent.transition_duration
 
 	create Text
 		text = parent.text
@@ -19,32 +21,21 @@ template Slide inherit Rectangle
 		x = 50%
 		y = 50%
 
-	create Animation
-		fill_mode = Always
-		create Keyframe
-			time = enter
-			x = -100%
-		create Keyframe
-			time = enter + transition_duration
-			x = 0
-		create Keyframe
-			time = exit
-			x = 0
-		create Keyframe
-			time = exit + transition_duration
-			x = 100%
+width = 400
+height = 300
 
-create Slide
+background = rgb(20, 21, 24)
+
+frame_rate = 40
+
+create MySlide
 	text = "Slide 1"
 	enter = 1s
-	fill = rgba(255, 0, 0, 100)
 
-create Slide
+create MySlide
 	text = "Slide 2"
 	enter = 3s
-	fill = rgba(255, 255, 0, 100)
 
-create Slide
+create MySlide
 	text = "Slide 3"
 	enter = 5s
-	fill = rgba(255, 0, 255, 100)
