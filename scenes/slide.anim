@@ -1,0 +1,20 @@
+
+template Slide inherit Animation
+	fill_mode = Always
+
+	enter := 0s
+	exit := enter + 2s
+	transition_duration := 750ms
+
+	create Keyframe
+		time = enter
+		x = -100%
+	create Keyframe
+		time = enter + transition_duration
+		x = 0
+	create Keyframe
+		time = exit
+		x = 0
+	create Keyframe
+		time = exit + transition_duration
+		x = 100%
