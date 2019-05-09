@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from functools import wraps
+import builtins
+import math
 import colorsys
 
 from .datatypes import *
@@ -78,6 +80,36 @@ def function(*args):
 	return decorator
 
 
+@function((Number, Number), Number)
+def mod(a, b):
+	return Number(a.value % b.value)
+
+
+@function((Number, Number), Number)
+def min(a, b):
+	return Number(builtins.min(a.value, b.value))
+
+
+@function((Number, Number), Number)
+def max(a, b):
+	return Number(builtins.max(a.value, b.value))
+
+
+@function((Number,), Number)
+def floor(x):
+	return Number(math.floor(x.value))
+
+
+@function((Number,), Number)
+def ceil(x):
+	return Number(math.ceil(x.value))
+
+
+@function((Number,), Number)
+def round(x):
+	return Number(builtins.round(x.value))
+
+
 @function((Number, Number, Number), Color)
 def rgb(r, g, b):
 	return Color(r.value, g.value, b.value)
@@ -97,3 +129,15 @@ def hsl(h, s, l):
 	b *= 255
 
 	return Color(r, g, b)
+
+
+@function((Number, Number, Number, Number), Color)
+def hsla(h, s, l, a):
+	r, g, b = colorsys.hls_to_rgb(h.value, l.value, s.value)
+
+	r *= 255
+	g *= 255
+	b *= 255
+	a = a.value
+
+	return Color(r, g, b, a)
