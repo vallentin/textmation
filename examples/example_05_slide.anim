@@ -2,17 +2,9 @@
 include transitions
 
 template MySlide inherit Rectangle
-	enter := 0s
-	exit := enter + 2s
-
-	text := "Slide"
+	text := "Slide " + (index + 1)
 
 	fill = hsla(index / 3, 0.5, 0.5, 150)
-
-	create SlideInLeft
-		enter = parent.enter
-	create SlideOutRight
-		exit = parent.exit
 
 	create Text
 		text = parent.text
@@ -28,13 +20,19 @@ background = rgb(20, 21, 24)
 frame_rate = 40
 
 create MySlide
-	text = "Slide 1"
-	enter = 1s
+	create SlideInLeft
+		enter = 1s
+	create SlideOutBottom
+		exit = 3s
 
 create MySlide
-	text = "Slide 2"
-	enter = 3s
+	create SlideInTop
+		enter = 3s
+	create SlideOutLeft
+		exit = 5s
 
 create MySlide
-	text = "Slide 3"
-	enter = 5s
+	create SlideInRight
+		enter = 5s
+	create SlideOutTop
+		exit = 7s

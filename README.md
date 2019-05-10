@@ -51,10 +51,15 @@ Here are some rendered versions of the examples found in the [examples](https://
   <img src="https://vallentin.io/img/textmation/layout.png">
 </p>
 
-### [Sliding Transition](https://github.com/Vallentin/textmation/blob/master/examples/example_04_slide.anim)
+### Sliding Transitions
 
-*Camo seems to break the GIF, so here's a [direct link to the GIF](https://vallentin.io/img/textmation/slide.gif).*
-
-<p align="center">
-  <img src="https://vallentin.io/img/textmation/slide.gif">
-</p>
+<table>
+<tr>
+<th><a href="https://github.com/Vallentin/textmation/blob/master/examples/example_04_slide.anim">Simple Left to Right</a></th>
+<th><a href="https://github.com/Vallentin/textmation/blob/master/examples/example_05_slide.anim">Various Directions</a></th>
+</tr>
+<tr>
+<td><img src="https://vallentin.io/img/textmation/slide.gif"></td>
+<td><img src="https://vallentin.io/img/textmation/slide2.gif"></td>
+</tr>
+</table>
