@@ -19,6 +19,7 @@ use rect::Rect;
 use drawing::{
     clear,
     draw_filled_rect_mut,
+    draw_image_mut,
 };
 
 py_module_initializer!(rasterizer, initrasterizer, PyInit_rasterizer, |py, m| {
@@ -78,6 +79,27 @@ py_class!(class PyImage |py| {
         let mut img = self.img(py).borrow_mut();
 
         draw_filled_rect_mut(&mut img, &Rect::new(rect.0, rect.1, rect.2, rect.3), Rgba([fill.0, fill.1, fill.2, fill.3]));
+
+        Ok(py.None())
+    }
+
+    def draw_image(&self, rect: (i32, i32, u32, u32), image: &PyImage) -> PyResult<PyObject> {
+        let img1 = self.img(py);
+        let img2 = image.img(py);
+
+        let same = (img1 as *const _) == (img2 as *const _);
+
+        let mut img1 = img1.borrow_mut();
+
+        if same {
+            let img2 = img1.clone();
+
+            draw_image_mut(&mut img1, &Rect::new(rect.0, rect.1, rect.2, rect.3), &img2);
+        } else {
+            let img2 = img2.borrow();
+
+            draw_image_mut(&mut img1, &Rect::new(rect.0, rect.1, rect.2, rect.3), &img2);
+        }
 
         Ok(py.None())
     }

@@ -3,6 +3,8 @@ use image::{
     GenericImage, GenericImageView,
     RgbaImage,
     Rgba,
+    imageops::resize,
+    imageops::FilterType,
 };
 
 use crate::rect::Rect;
@@ -65,5 +67,49 @@ pub fn draw_filled_rect_mut(image: &mut RgbaImage, rect: &Rect, fill: Rgba<u8>) 
                 }
             }
         }
+    }
+}
+
+pub fn draw_image_at(image: &mut RgbaImage, top_left: (i32, i32), other: &RgbaImage) {
+    let (left, top) = top_left;
+
+    let image_bounds = Rect::new(0, 0, image.width(), image.height());
+    let other_bounds = Rect::new(left, top, other.width(), other.height());
+    let intersection = image_bounds.intersect(&other_bounds);
+
+    if intersection.is_empty() {
+        return;
+    }
+
+    for y in 0..intersection.height {
+        for x in 0..intersection.width {
+            unsafe {
+                let front = other.unsafe_get_pixel(x, y);
+
+                let x = (left as u32) + x;
+                let y = (top as u32) + y;
+
+                let back  = image.unsafe_get_pixel(x, y);
+
+                image.unsafe_put_pixel(x, y, blend_color(back, front));
+            }
+        }
+    }
+}
+
+pub fn draw_image_mut(image: &mut RgbaImage, rect: &Rect, other: &RgbaImage) {
+    let image_bounds = Rect::new(0, 0, image.width(), image.height());
+    let intersection = image_bounds.intersect(rect);
+
+    if intersection.is_empty() {
+        return;
+    }
+
+    if (rect.width != other.width()) || (rect.height != other.height()) {
+        // TODO: Sample instead of resizing
+        let other = resize(other, rect.width, rect.height, FilterType::Triangle);
+        draw_image_at(image, (rect.left, rect.top), &other);
+    } else {
+        draw_image_at(image, (rect.left, rect.top), other);
     }
 }
