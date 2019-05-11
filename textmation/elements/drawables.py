@@ -143,6 +143,7 @@ class Image(Drawable):
 		super().on_ready()
 
 		self.define("filename", "", constant=True)
+		self.define("url", "", constant=True)
 
 
 @register_flag

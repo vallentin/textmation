@@ -103,13 +103,12 @@ class ElementProperty(Value):
 		return self.value
 
 	def set(self, value):
-		self.check_assignable(value)
-
 		if isinstance(value, (int, float)):
 			value = Number(value)
 		elif isinstance(value, str):
 			value = String(value)
 
+		self.check_assignable(value)
 		self.check_value(value)
 
 		self.value = value
