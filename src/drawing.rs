@@ -7,6 +7,13 @@ use image::{
     imageops::FilterType,
 };
 
+use rusttype::{
+    FontCollection,
+    Font,
+    Scale,
+    point,
+};
+
 use crate::rect::Rect;
 
 pub fn blend_color(back: Rgba<u8>, front: Rgba<u8>) -> Rgba<u8> {
@@ -111,5 +118,45 @@ pub fn draw_image_mut(image: &mut RgbaImage, rect: &Rect, other: &RgbaImage) {
         draw_image_at(image, (rect.left, rect.top), &other);
     } else {
         draw_image_at(image, (rect.left, rect.top), other);
+    }
+}
+
+pub fn draw_text_mut(image: &mut RgbaImage, top_left: (i32, i32), text: &str, font: &Font, scale: Scale, fill: Rgba<u8>) {
+    let (x, y) = top_left;
+    let [r, g, b, a] = fill.data;
+
+    if a == 0 {
+        return;
+    }
+
+    let v_metrics = font.v_metrics(scale);
+    let glyphs: Vec<_> = font
+        .layout(text, scale, point(0.0, v_metrics.ascent))
+        .collect();
+
+    let min_x = glyphs
+        .first()
+        .map(|g| g.pixel_bounding_box().unwrap().min.x)
+        .unwrap();
+
+    let x = x - min_x;
+    let a = a as f32;
+
+    for glyph in glyphs {
+        if let Some(bounding_box) = glyph.pixel_bounding_box() {
+            glyph.draw(|gx, gy, v| {
+                let x = x + bounding_box.min.x + gx as i32;
+                let y = y + bounding_box.min.y + gy as i32;
+
+                if (x >= 0) && (y >= 0) && (x < (image.width() as i32)) && (y < (image.height() as i32)) {
+                    unsafe {
+                        let pixel = image.unsafe_get_pixel(x as u32, y as u32);
+                        let pixel = blend_color(pixel, Rgba([r, g, b, (v * a) as u8]));
+
+                        image.unsafe_put_pixel(x as u32, y as u32, pixel);
+                    }
+                }
+            });
+        }
     }
 }

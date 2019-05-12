@@ -10,6 +10,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 image = "0.21.1"
+rusttype = "0.7.6"
 
 [dependencies.cpython]
 version = "0.2"
