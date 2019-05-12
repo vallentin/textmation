@@ -10,7 +10,7 @@ import sys
 
 from .datatypes import Point, Size, Rect
 from .rasterizer import Image, Font, ResamplingFilter
-from .elements import Element, Scene
+from .elements import Element, Scene, ImageFit
 from .utilities import iter_all_superclasses
 
 
@@ -126,6 +126,38 @@ class Renderer:
 	def _render_Image(self, image):
 		bounds = Rect(image.p_x, image.p_y, image.p_width, image.p_height)
 		_image = Image.load(image.p_filename)
+
+		fit = image.p_fit
+		if fit in (ImageFit.Contain, ImageFit.Cover):
+			img_w, img_h = _image.size
+			bounds_w, bounds_h = bounds.size
+
+			sx = bounds_w / img_w
+			sy = bounds_h / img_h
+
+			tx, ty = bounds.position
+
+			if fit == ImageFit.Contain:
+				scale = min(sx, sy)
+
+				if sx > sy:
+					tx += (bounds_w / 2) - (img_w / 2 * sy)
+				else:
+					ty += (bounds_h / 2) - (img_h / 2 * sx)
+			else: # elif fit == ImageFit.Cover:
+				scale = max(sx, sy)
+
+				if sx < sy:
+					tx += (bounds_w / 2) - (img_w / 2 * sy)
+				else:
+					ty += (bounds_h / 2) - (img_h / 2 * sx)
+
+			bounds_w = img_w * scale
+			bounds_h = img_h * scale
+
+			bounds = Rect(tx, ty, bounds_w, bounds_h)
+		# else: # elif fit == ImageFit.Fill:
+		# 	pass
 
 		self._image.paste(_image, bounds + self.translation, alpha_composite=True, filter=ResamplingFilter.Bilinear)
 

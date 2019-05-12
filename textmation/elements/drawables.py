@@ -138,12 +138,22 @@ class Line(Drawable):
 		self.set("width", 1)
 
 
+@register_enum
+class ImageFit(IntEnum):
+	Contain = auto()
+	Cover = auto()
+	Fill = auto()
+	Default = Fill
+
+
 class Image(Drawable):
 	def on_ready(self):
 		super().on_ready()
 
 		self.define("filename", "", constant=True)
 		self.define("url", "", constant=True)
+
+		self.define("fit", ImageFit.Default, constant=True)
 
 
 @register_flag
