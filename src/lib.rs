@@ -1,6 +1,8 @@
 
 use std::cell::RefCell;
 use std::path::Path;
+use std::fs::File;
+use std::io::Read;
 
 #[macro_use]
 extern crate cpython;
@@ -8,9 +10,11 @@ extern crate cpython;
 use cpython::{PyResult, PyObject};
 
 use image::{
-    ImageBuffer, RgbaImage,
+    RgbaImage,
     Rgba,
 };
+
+use rusttype::{FontCollection, Font, Scale, point};
 
 mod rect;
 mod drawing;
@@ -20,12 +24,14 @@ use drawing::{
     clear,
     draw_filled_rect_mut,
     draw_image_mut,
+    draw_text_mut,
 };
 
 py_module_initializer!(rasterizer, initrasterizer, PyInit_rasterizer, |py, m| {
     m.add(py, "__doc__", "Rasterizer module implemented in Rust")?;
 
     m.add_class::<PyImage>(py)?;
+    m.add_class::<PyFont>(py)?;
 
     Ok(())
 });
@@ -34,7 +40,8 @@ py_class!(class PyImage |py| {
     data img: RefCell<RgbaImage>;
 
     def __new__(_cls, width: u32, height: u32, background: (u8, u8, u8, u8) = (0, 0, 0, 255)) -> PyResult<PyImage> {
-        let img = ImageBuffer::from_pixel(width, height, Rgba([background.0, background.1, background.2, background.3]));
+        // let img = RgbaImage::new(width, height);
+        let img = RgbaImage::from_pixel(width, height, Rgba([background.0, background.1, background.2, background.3]));
 
         PyImage::create_instance(py, RefCell::new(img))
     }
@@ -102,5 +109,58 @@ py_class!(class PyImage |py| {
         }
 
         Ok(py.None())
+    }
+
+    def draw_text(&self, top_left: (i32, i32), text: &str, font: &PyFont, size: f32, fill: (u8, u8, u8, u8)) -> PyResult<PyObject> {
+        let mut img = self.img(py).borrow_mut();
+
+        let font = font.font(py).borrow();
+        let scale = Scale::uniform(size);
+
+        draw_text_mut(&mut img, top_left, text, &font, scale, Rgba([fill.0, fill.1, fill.2, fill.3]));
+
+        Ok(py.None())
+    }
+});
+
+py_class!(class PyFont |py| {
+    data font: RefCell<Font<'static>>;
+
+    @staticmethod
+    def load(filename: String) -> PyResult<PyFont> {
+        let mut file = File::open(filename).unwrap();
+        let mut data = Vec::new();
+
+        file.read_to_end(&mut data).unwrap();
+
+        let font = FontCollection::from_bytes(data).unwrap().into_font().unwrap();
+
+        PyFont::create_instance(py, RefCell::new(font))
+    }
+
+    def measure_line(&self, text: &str, size: f32) -> PyResult<(u32, u32)> {
+        let font = self.font(py).borrow();
+        let scale = Scale::uniform(size);
+
+        let v_metrics = font.v_metrics(scale);
+        let glyphs: Vec<_> = font
+            .layout(text, scale, point(0.0, v_metrics.ascent))
+            .collect();
+
+        let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
+
+        let glyphs_width = {
+            let min_x = glyphs
+                .first()
+                .map(|g| g.pixel_bounding_box().unwrap().min.x)
+                .unwrap();
+            let max_x = glyphs
+                .last()
+                .map(|g| g.pixel_bounding_box().unwrap().max.x)
+                .unwrap();
+            (max_x - min_x) as u32
+        };
+
+        Ok((glyphs_width, glyphs_height))
     }
 });
