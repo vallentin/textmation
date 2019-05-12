@@ -16,6 +16,35 @@ use rusttype::{
 
 use crate::rect::Rect;
 
+#[inline(always)]
+fn in_bounds(image: &RgbaImage, x: i32, y: i32) -> bool {
+    (x >= 0) && (y >= 0) && (x < (image.width() as i32)) && (y < (image.height() as i32))
+}
+
+#[inline(always)]
+unsafe fn unsafe_put_pixel_blend(image: &mut RgbaImage, x: u32, y: u32, pixel: Rgba<u8>) {
+    let current = image.unsafe_get_pixel(x as u32, y as u32);
+    image.unsafe_put_pixel(x as u32, y as u32, blend_color(current, pixel));
+}
+
+#[inline(always)]
+fn put_pixel_if_in_bounds(image: &mut RgbaImage, x: i32, y: i32, pixel: Rgba<u8>) {
+    if in_bounds(image, x, y) {
+        unsafe {
+            image.unsafe_put_pixel(x as u32, y as u32, pixel);
+        }
+    }
+}
+
+#[inline(always)]
+fn put_pixel_blend_if_in_bounds(image: &mut RgbaImage, x: i32, y: i32, pixel: Rgba<u8>) {
+    if in_bounds(image, x, y) {
+        unsafe {
+            unsafe_put_pixel_blend(image, x as u32, y as u32, pixel);
+        }
+    }
+}
+
 pub fn blend_color(back: Rgba<u8>, front: Rgba<u8>) -> Rgba<u8> {
     let [br, bg, bb, ba] = back.data;
     let [fr, fg, fb, fa] = front.data;
@@ -69,8 +98,7 @@ pub fn draw_filled_rect_mut(image: &mut RgbaImage, rect: &Rect, fill: Rgba<u8>) 
         for y in intersection.top..=intersection.bottom() {
             for x in intersection.left..=intersection.right() {
                 unsafe {
-                    let pixel = image.unsafe_get_pixel(x as u32, y as u32);
-                    image.unsafe_put_pixel(x as u32, y as u32, blend_color(pixel, fill));
+                    unsafe_put_pixel_blend(image, x as u32, y as u32, fill);
                 }
             }
         }
@@ -148,15 +176,74 @@ pub fn draw_text_mut(image: &mut RgbaImage, top_left: (i32, i32), text: &str, fo
                 let x = x + bounding_box.min.x + gx as i32;
                 let y = y + bounding_box.min.y + gy as i32;
 
-                if (x >= 0) && (y >= 0) && (x < (image.width() as i32)) && (y < (image.height() as i32)) {
+                if in_bounds(image, x, y) {
                     unsafe {
-                        let pixel = image.unsafe_get_pixel(x as u32, y as u32);
-                        let pixel = blend_color(pixel, Rgba([r, g, b, (v * a) as u8]));
-
-                        image.unsafe_put_pixel(x as u32, y as u32, pixel);
+                        unsafe_put_pixel_blend(image, x as u32, y as u32, Rgba([r, g, b, (v * a) as u8]));
                     }
                 }
             });
+        }
+    }
+}
+
+pub fn draw_line_segment_mut(image: &mut RgbaImage, start: (i32, i32), end: (i32, i32), fill: Rgba<u8>) {
+    let alpha = fill.data[3];
+
+    if alpha == 0 {
+        return;
+    }
+
+    let (mut x0, mut y0) = start;
+    let (x1, y1) = end;
+
+    let dx =  (x1 - x0).abs();
+    let dy = -(y1 - y0).abs();
+
+    let sx = if x0 < x1 { 1 } else { -1 };
+    let sy = if y0 < y1 { 1 } else { -1 };
+
+    let mut err = dx + dy;
+    let mut err2;
+
+    if alpha == 255 {
+        loop {
+            put_pixel_if_in_bounds(image, x0, y0, fill);
+
+            if (x0 == x1) && (y0 == y1) {
+                break;
+            }
+
+            err2 = err * 2;
+
+            if err2 >= dy {
+                err += dy;
+                x0 += sx;
+            }
+
+            if err2 <= dx {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    } else {
+        loop {
+            put_pixel_blend_if_in_bounds(image, x0, y0, fill);
+
+            if (x0 == x1) && (y0 == y1) {
+                break;
+            }
+
+            err2 = err * 2;
+
+            if err2 >= dy {
+                err += dy;
+                x0 += sx;
+            }
+
+            if err2 <= dx {
+                err += dx;
+                y0 += sy;
+            }
         }
     }
 }

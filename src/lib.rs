@@ -25,6 +25,7 @@ use drawing::{
     draw_filled_rect_mut,
     draw_image_mut,
     draw_text_mut,
+    draw_line_segment_mut,
 };
 
 py_module_initializer!(rasterizer, initrasterizer, PyInit_rasterizer, |py, m| {
@@ -118,6 +119,14 @@ py_class!(class PyImage |py| {
         let scale = Scale::uniform(size);
 
         draw_text_mut(&mut img, top_left, text, &font, scale, Rgba([fill.0, fill.1, fill.2, fill.3]));
+
+        Ok(py.None())
+    }
+
+    def draw_line(&self, start: (i32, i32), end: (i32, i32), color: (u8, u8, u8, u8)) -> PyResult<PyObject> {
+        let mut img = self.img(py).borrow_mut();
+
+        draw_line_segment_mut(&mut img, start, end, Rgba([color.0, color.1, color.2, color.3]));
 
         Ok(py.None())
     }
