@@ -247,3 +247,117 @@ pub fn draw_line_segment_mut(image: &mut RgbaImage, start: (i32, i32), end: (i32
         }
     }
 }
+
+pub fn draw_filled_circle_mut(image: &mut RgbaImage, center: (i32, i32), radius: u32, fill: Rgba<u8>) {
+    let alpha = fill.data[3];
+
+    if alpha == 0 {
+        return;
+    }
+
+    let (cx, cy) = center;
+
+    let image_bounds = Rect::new(0, 0, image.width(), image.height());
+    let circle_bounds = Rect::from_min_max(
+        cx - radius as i32, cy - radius as i32,
+        cx + radius as i32, cy + radius as i32);
+
+    let intersection = image_bounds.intersect(&circle_bounds);
+
+    if intersection.is_empty() {
+        return;
+    }
+
+    let radius_squared = (radius * radius) as f32;
+
+    if alpha == 255 {
+        for py in intersection.top..=intersection.bottom() {
+            let y = ((py - cy) as f32) + 0.5;
+
+            for px in intersection.left..=intersection.right() {
+                let x = ((px - cx) as f32) + 0.5;
+
+                if (x * x + y * y) <= radius_squared {
+                    unsafe {
+                        image.unsafe_put_pixel(px as u32, py as u32, fill);
+                    }
+                }
+            }
+        }
+    } else {
+        for py in intersection.top..=intersection.bottom() {
+            let y = ((py - cy) as f32) + 0.5;
+
+            for px in intersection.left..=intersection.right() {
+                let x = ((px - cx) as f32) + 0.5;
+
+                if (x * x + y * y) <= radius_squared {
+                    unsafe {
+                        unsafe_put_pixel_blend(image, px as u32, py as u32, fill);
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn draw_filled_ellipse_mut(image: &mut RgbaImage, center: (i32, i32), radius: (u32, u32), fill: Rgba<u8>) {
+    let alpha = fill.data[3];
+
+    if alpha == 0 {
+        return;
+    }
+
+    let (cx, cy) = center;
+
+    let (radius_x, radius_y) = radius;
+
+    let image_bounds = Rect::new(0, 0, image.width(), image.height());
+    let circle_bounds = Rect::from_min_max(
+        cx - radius_x as i32, cy - radius_y as i32,
+        cx + radius_x as i32, cy + radius_y as i32);
+
+    let intersection = image_bounds.intersect(&circle_bounds);
+
+    if intersection.is_empty() {
+        return;
+    }
+
+    if alpha == 255 {
+        for py in intersection.top..=intersection.bottom() {
+                let y = ((py - cy) as f32) + 0.5;
+
+                for px in intersection.left..=intersection.right() {
+                    let x = ((px - cx) as f32) + 0.5;
+
+                    let dist =
+                        (x * x) / ((radius_x * radius_x) as f32) +
+                        (y * y) / ((radius_y * radius_y) as f32);
+
+                    if dist <= 1.0 {
+                        unsafe {
+                            image.unsafe_put_pixel(px as u32, py as u32, fill);
+                        }
+                    }
+                }
+            }
+    } else {
+        for py in intersection.top..=intersection.bottom() {
+            let y = ((py - cy) as f32) + 0.5;
+
+            for px in intersection.left..=intersection.right() {
+                let x = ((px - cx) as f32) + 0.5;
+
+                let dist =
+                    (x * x) / ((radius_x * radius_x) as f32) +
+                    (y * y) / ((radius_y * radius_y) as f32);
+
+                if dist <= 1.0 {
+                    unsafe {
+                        unsafe_put_pixel_blend(image, px as u32, py as u32, fill);
+                    }
+                }
+            }
+        }
+    }
+}

@@ -26,6 +26,8 @@ use drawing::{
     draw_image_mut,
     draw_text_mut,
     draw_line_segment_mut,
+    draw_filled_circle_mut,
+    draw_filled_ellipse_mut,
 };
 
 py_module_initializer!(rasterizer, initrasterizer, PyInit_rasterizer, |py, m| {
@@ -127,6 +129,22 @@ py_class!(class PyImage |py| {
         let mut img = self.img(py).borrow_mut();
 
         draw_line_segment_mut(&mut img, start, end, Rgba([color.0, color.1, color.2, color.3]));
+
+        Ok(py.None())
+    }
+
+    def draw_circle(&self, center: (i32, i32), radius: u32, fill: (u8, u8, u8, u8)) -> PyResult<PyObject> {
+        let mut img = self.img(py).borrow_mut();
+
+        draw_filled_circle_mut(&mut img, center, radius, Rgba([fill.0, fill.1, fill.2, fill.3]));
+
+        Ok(py.None())
+    }
+
+    def draw_ellipse(&self, center: (i32, i32), radius: (u32, u32), fill: (u8, u8, u8, u8)) -> PyResult<PyObject> {
+        let mut img = self.img(py).borrow_mut();
+
+        draw_filled_ellipse_mut(&mut img, center, radius, Rgba([fill.0, fill.1, fill.2, fill.3]));
 
         Ok(py.None())
     }

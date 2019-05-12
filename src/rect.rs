@@ -12,6 +12,13 @@ impl Rect {
         Rect { left, top, width, height }
     }
 
+    pub fn from_min_max(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Rect {
+        let width  = (max_x - min_x).max(0) as u32;
+        let height = (max_y - min_y).max(0) as u32;
+
+        Rect { left: min_x, top: min_y, width, height }
+    }
+
     pub fn right(&self) -> i32 {
         self.left + (self.width as i32) - 1
     }
