@@ -355,6 +355,7 @@ name = "textmation"
 version = "0.1.0"
 dependencies = [
  "cpython 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gif 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusttype 0.7.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

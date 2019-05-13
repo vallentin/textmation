@@ -14,6 +14,8 @@ use image::{
     Rgba,
 };
 
+use gif::{Frame, Encoder, Repeat, SetParameter};
+
 use rusttype::{FontCollection, Font, Scale, point};
 
 mod rect;
@@ -73,6 +75,34 @@ py_class!(class PyImage |py| {
         let img = self.img(py).borrow();
 
         img.save(&Path::new(&filename)).unwrap();
+
+        Ok(py.None())
+    }
+
+    @staticmethod
+    def save_gif(filename: String, frames: Vec<PyImage>, frame_rate: u16) -> PyResult<PyObject> {
+        let first = &frames[0].img(py).borrow();
+        let (w, h) = (first.width() as u16, first.height() as u16);
+
+        let mut image = File::create(filename).unwrap();
+        let mut encoder = Encoder::new(&mut image, w, h, &[]).unwrap();
+
+        encoder.set(Repeat::Infinite).unwrap();
+
+        let delay = 1000 / frame_rate;
+
+        for (i, frame) in (1..).zip(&frames) {
+            println!("Writing Frame {}/{}", i, frames.len());
+
+            let frame = frame.img(py).borrow();
+
+            let mut pixels = frame.to_vec();
+            let mut frame = Frame::from_rgba(w, h, &mut pixels);
+
+            frame.delay = delay / 10;
+
+            encoder.write_frame(&frame).unwrap();
+        }
 
         Ok(py.None())
     }
