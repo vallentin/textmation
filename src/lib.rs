@@ -51,6 +51,12 @@ py_class!(class PyImage |py| {
         PyImage::create_instance(py, RefCell::new(img))
     }
 
+    def size(&self) -> PyResult<(u32, u32)> {
+        let img = self.img(py).borrow();
+
+        Ok(img.dimensions())
+    }
+
     def width(&self) -> PyResult<u32> {
         let img = self.img(py).borrow();
 

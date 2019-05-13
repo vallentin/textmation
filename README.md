@@ -16,7 +16,14 @@ Exporting video formats requires [ffmpeg](https://ffmpeg.org).
 git clone https://github.com/Vallentin/textmation
 cd textmation
 
-pip install -r requirements.txt
+cargo build --release
+
+# Windows
+cp target/release/rasterizer.dll rasterizer.pyd
+# Linux
+cp target/release/rasterizer.so rasterizer.so
+# MacOS
+cp target/release/rasterizer.dylib rasterizer.so
 
 # Check help message to see command-line options
 python -m textmation --help

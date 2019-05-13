@@ -9,6 +9,9 @@ rasterizer.pyd
 __pycache__/
 *.pyc
 
+*.pyd
+*.so
+
 frames/
 output.gif
 
