@@ -116,13 +116,19 @@ pub fn draw_image_at(image: &mut RgbaImage, top_left: (i32, i32), other: &RgbaIm
         return;
     }
 
+    let offset_x = left.min(0).abs() as u32;
+    let offset_y = top.min(0).abs() as u32;
+
+    let left = left.max(0) as u32;
+    let top = top.max(0) as u32;
+
     for y in 0..intersection.height {
         for x in 0..intersection.width {
             unsafe {
-                let front = other.unsafe_get_pixel(x, y);
+                let front = other.unsafe_get_pixel(x + offset_x, y + offset_y);
 
-                let x = (left as u32) + x;
-                let y = (top as u32) + y;
+                let x = left + x;
+                let y = top + y;
 
                 let back  = image.unsafe_get_pixel(x, y);
 
