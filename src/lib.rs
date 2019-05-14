@@ -71,7 +71,7 @@ py_class!(class PyImage |py| {
 
     @staticmethod
     def load(filename: String) -> PyResult<PyImage> {
-        let img = image::open(filename).unwrap();
+        let img = image::open(&filename).expect(&format!("File not found {:?}", filename));
         let img = img.to_rgba();
 
         PyImage::create_instance(py, RefCell::new(img))
@@ -191,10 +191,10 @@ py_class!(class PyFont |py| {
 
     @staticmethod
     def load(filename: String) -> PyResult<PyFont> {
-        let mut file = File::open(filename).unwrap();
+        let mut file = File::open(&filename).expect(&format!("File not found {:?}", filename));
         let mut data = Vec::new();
 
-        file.read_to_end(&mut data).unwrap();
+        file.read_to_end(&mut data).expect(&format!("Could not read data {:?}", filename));
 
         let font = FontCollection::from_bytes(data).unwrap().into_font().unwrap();
 
