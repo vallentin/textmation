@@ -3,6 +3,7 @@ width = 200
 height = 200
 
 template MyText inherit Text
+	font = "fonts/Montserrat-Regular.ttf"
 	font_size = 80
 
 template MyRect inherit Rectangle

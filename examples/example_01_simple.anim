@@ -9,4 +9,5 @@ create Rectangle
 
 	create Text
 		text = "A"
+		font = "fonts/Montserrat-Regular.ttf"
 		font_size = 100

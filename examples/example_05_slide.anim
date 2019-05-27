@@ -8,6 +8,7 @@ template MySlide inherit Rectangle
 
 	create Text
 		text = parent.text
+		font = "fonts/Montserrat-Regular.ttf"
 		font_size = 48
 		x = 50%
 		y = 50%
