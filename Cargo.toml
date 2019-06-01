@@ -4,10 +4,6 @@ version = "0.1.0"
 authors = ["Christian Vallentin"]
 edition = "2018"
 
-[[bin]]
-name = "textmation"
-path = "src/bin.rs"
-
 [dependencies]
 image = "0.21.1"
 gif = "0.10.1"
