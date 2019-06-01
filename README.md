@@ -10,29 +10,22 @@ Exporting video formats requires [ffmpeg](https://ffmpeg.org).
 
 ## Installation & Testing
 
-*Note that Textmation has currently only been developed and tested with Python 3.7.2.*
+*Note that Textmation currently relies on some Python scripts, and can as such not easily be installed with `cargo install --git [url]`.*
 
 ```bash
-git clone https://github.com/Vallentin/textmation
+git clone https://github.com/vallentin/textmation
 cd textmation
 
-cargo build --release
-
-# Windows
-cp target/release/rasterizer.dll rasterizer.pyd
-# Linux
-cp target/release/rasterizer.so rasterizer.so
-# MacOS
-cp target/release/rasterizer.dylib rasterizer.so
+cargo install --path .
 
 # Check help message to see command-line options
-python -m textmation --help
+textmation --help
 
 # Run "simple" example and output GIF
-python -m textmation examples/example_01_simple.anim
+textmation examples/example_01_simple.anim
 
 # Export format is inferred from the output filename
-python -m textmation -o output.mp4 examples/example_01_simple.anim
+textmation -o output.mp4 examples/example_01_simple.anim
 ```
 
 
@@ -40,19 +33,19 @@ python -m textmation -o output.mp4 examples/example_01_simple.anim
 
 Here are some rendered versions of the examples found in the [examples](https://github.com/Vallentin/textmation/tree/master/examples) directory.
 
-### [Rectangle & Text](https://github.com/Vallentin/textmation/blob/master/examples/example_01_simple.anim)
+### [Rectangle & Text](https://github.com/vallentin/textmation/blob/master/examples/example_01_simple.anim)
 
 <p align="center">
   <img src="https://vallentin.io/img/textmation/simple.png">
 </p>
 
-### [Templates](https://github.com/Vallentin/textmation/blob/master/examples/example_02_template.anim)
+### [Templates](https://github.com/vallentin/textmation/blob/master/examples/example_02_template.anim)
 
 <p align="center">
   <img src="https://vallentin.io/img/textmation/template.png">
 </p>
 
-### [VBox & HBox](https://github.com/Vallentin/textmation/blob/master/examples/example_03_layout.anim)
+### [VBox & HBox](https://github.com/vallentin/textmation/blob/master/examples/example_03_layout.anim)
 
 <p align="center">
   <img src="https://vallentin.io/img/textmation/layout.png">
@@ -62,11 +55,17 @@ Here are some rendered versions of the examples found in the [examples](https://
 
 <table>
 <tr>
-<th><a href="https://github.com/Vallentin/textmation/blob/master/examples/example_04_slide.anim">Simple Left to Right</a></th>
-<th><a href="https://github.com/Vallentin/textmation/blob/master/examples/example_05_slide.anim">Various Directions</a></th>
+<th><a href="https://github.com/vallentin/textmation/blob/master/examples/example_04_slide.anim">Simple Left to Right</a></th>
+<th><a href="https://github.com/vallentin/textmation/blob/master/examples/example_05_slide.anim">Various Directions</a></th>
 </tr>
 <tr>
 <td><img src="https://vallentin.io/img/textmation/slide.gif"></td>
 <td><img src="https://vallentin.io/img/textmation/slide2.gif"></td>
 </tr>
 </table>
+
+
+  [examples]: https://github.com/vallentin/textmation/tree/master/examples
+
+  [cargo]: https://doc.rust-lang.org/cargo/
+  [rustup]: https://rustup.rs/
