@@ -1,9 +1,13 @@
 
 use std::env;
+use std::process;
 
 use cpython::{
     Python, PythonObject,
+    ObjectProtocol,
+    PyClone,
     PyResult,
+    exc::SystemExit,
     PyString,
     PyList, PythonObjectWithCheckedDowncast,
 };
@@ -12,7 +16,22 @@ fn main() {
     let gil = Python::acquire_gil();
     let py = gil.python();
 
-    run(py).unwrap();
+    if let Err(err) = run(py) {
+        if let Some(err_val) = err.clone_ref(py).pvalue {
+            if let Ok(sys_exit) = SystemExit::downcast_from(py, err_val) {
+                let sys_exit = sys_exit.into_object();
+
+                let code = sys_exit.getattr(py, "code").unwrap();
+                let code = code.extract::<i32>(py).unwrap();
+
+                process::exit(code);
+            }
+        }
+
+        err.print(py);
+
+        process::exit(-1);
+    }
 }
 
 fn run(py: Python) -> PyResult<()> {
