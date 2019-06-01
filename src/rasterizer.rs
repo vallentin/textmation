@@ -4,9 +4,6 @@ use std::path::Path;
 use std::fs::File;
 use std::io::Read;
 
-#[macro_use]
-extern crate cpython;
-
 use cpython::{PyResult, PyObject};
 
 use image::{
@@ -18,11 +15,8 @@ use gif::{Frame, Encoder, Repeat, SetParameter};
 
 use rusttype::{FontCollection, Font, Scale, point};
 
-mod rect;
-mod drawing;
-
-use rect::Rect;
-use drawing::{
+use crate::rect::Rect;
+use crate::drawing::{
     clear,
     draw_filled_rect_mut,
     draw_image_mut,
@@ -41,7 +35,7 @@ py_module_initializer!(rasterizer, initrasterizer, PyInit_rasterizer, |py, m| {
     Ok(())
 });
 
-py_class!(class PyImage |py| {
+py_class!(pub class PyImage |py| {
     data img: RefCell<RgbaImage>;
 
     def __new__(_cls, width: u32, height: u32, background: (u8, u8, u8, u8) = (0, 0, 0, 255)) -> PyResult<PyImage> {
@@ -186,7 +180,7 @@ py_class!(class PyImage |py| {
     }
 });
 
-py_class!(class PyFont |py| {
+py_class!(pub class PyFont |py| {
     data font: RefCell<Font<'static>>;
 
     @staticmethod

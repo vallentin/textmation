@@ -8,10 +8,6 @@ edition = "2018"
 name = "textmation"
 path = "src/bin.rs"
 
-[lib]
-name = "rasterizer"
-crate-type = ["cdylib"]
-
 [dependencies]
 image = "0.21.1"
 gif = "0.10.1"

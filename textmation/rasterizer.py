@@ -5,20 +5,7 @@ import os
 from os.path import join, dirname, abspath
 from importlib.util import spec_from_file_location, module_from_spec
 
-
-_textmation_dir = abspath(join(dirname(__file__), os.pardir))
-
-if os.name == "nt":
-	_rasterizer_pyd = abspath(join(_textmation_dir, "rasterizer.pyd"))
-else:
-	_rasterizer_pyd = abspath(join(_textmation_dir, "rasterizer.so"))
-
-
-spec = spec_from_file_location("rasterizer", _rasterizer_pyd)
-rasterizer = module_from_spec(spec)
-spec.loader.exec_module(rasterizer)
-
-Image, Font = rasterizer.PyImage, rasterizer.PyFont
+from rasterizer import Image, Font
 
 
 _images = {}

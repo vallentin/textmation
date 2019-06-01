@@ -2,6 +2,9 @@
 use std::env;
 use std::process;
 
+#[macro_use]
+extern crate cpython;
+
 use cpython::{
     Python, PythonObject,
     ObjectProtocol,
@@ -10,6 +13,17 @@ use cpython::{
     exc::SystemExit,
     PyString,
     PyList, PythonObjectWithCheckedDowncast,
+    PyDict,
+    PyModule,
+};
+
+mod rect;
+mod drawing;
+mod rasterizer;
+
+use rasterizer::{
+    PyImage,
+    PyFont,
 };
 
 fn main() {
@@ -42,7 +56,16 @@ fn run(py: Python) -> PyResult<()> {
     let path = PyList::downcast_from(py, sys.get(py, "path")?)?;
     path.insert_item(py, 0, current_dir.into_object());
 
-    let mut argv = vec!();
+    let module = PyModule::new(py, "rasterizer")?;
+    // module.add_class::<PyImage>(py)?;
+    // module.add_class::<PyFont>(py)?;
+    module.add(py, "Image", py.get_type::<PyImage>())?;
+    module.add(py, "Font", py.get_type::<PyFont>())?;
+
+    let modules = PyDict::downcast_from(py, sys.get(py, "modules")?)?;
+    modules.set_item(py, "rasterizer", module)?;
+
+    let mut argv = vec![];
 
     for arg in env::args() {
         argv.push(PyString::new(py, &arg).into_object());
