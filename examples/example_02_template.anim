@@ -3,34 +3,34 @@ width = 200
 height = 200
 
 template MyText inherit Text
-	font = "fonts/Montserrat-Regular.ttf"
-	font_size = 100
+    font = "fonts/Montserrat-Regular.ttf"
+    font_size = 100
 
 template MyRect inherit Rectangle
-	text := "A"
+    text := "A"
 
-	width = 50%
-	height = 50%
-	fill = rgba(255, 0, 0, 150)
+    width = 50%
+    height = 50%
+    fill = rgba(255, 0, 0, 150)
 
-	create MyText
-		text = parent.text
-
-create MyRect
-	text = "A"
+    create MyText
+        text = parent.text
 
 create MyRect
-	text = "B"
-	x = 50%
-	fill = rgba(0, 255, 0, 150)
+    text = "A"
 
 create MyRect
-	text = "C"
-	y = 50%
-	fill = rgba(0, 0, 255, 150)
+    text = "B"
+    x = 50%
+    fill = rgba(0, 255, 0, 150)
 
 create MyRect
-	text = "D"
-	x = 50%
-	y = 50%
-	fill = rgba(255, 0, 255, 150)
+    text = "C"
+    y = 50%
+    fill = rgba(0, 0, 255, 150)
+
+create MyRect
+    text = "D"
+    x = 50%
+    y = 50%
+    fill = rgba(255, 0, 255, 150)

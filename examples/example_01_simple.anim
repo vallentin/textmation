@@ -3,11 +3,11 @@ width = 200
 height = 200
 
 create Rectangle
-	width = 50%
-	height = 50%
-	fill = rgba(255, 0, 0, 150)
+    width = 50%
+    height = 50%
+    fill = rgba(255, 0, 0, 150)
 
-	create Text
-		text = "A"
-		font = "fonts/Montserrat-Regular.ttf"
-		font_size = 100
+    create Text
+        text = "A"
+        font = "fonts/Montserrat-Regular.ttf"
+        font_size = 100

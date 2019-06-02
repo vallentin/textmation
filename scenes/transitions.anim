@@ -1,62 +1,62 @@
 
 template SlideIn inherit Animation
-	enter := 0s
-	transition_duration := 750ms
+    enter := 0s
+    transition_duration := 750ms
 
-	fill_mode = Before
+    fill_mode = Before
 
-	create Keyframe
-		time = parent.enter + parent.transition_duration
-		x = 0
-		y = 0
+    create Keyframe
+        time = parent.enter + parent.transition_duration
+        x = 0
+        y = 0
 
 template SlideInLeft inherit SlideIn
-	create Keyframe
-		time = parent.enter
-		x = -100%
+    create Keyframe
+        time = parent.enter
+        x = -100%
 
 template SlideInRight inherit SlideIn
-	create Keyframe
-		time = parent.enter
-		x = 100%
+    create Keyframe
+        time = parent.enter
+        x = 100%
 
 template SlideInTop inherit SlideIn
-	create Keyframe
-		time = parent.enter
-		y = -100%
+    create Keyframe
+        time = parent.enter
+        y = -100%
 
 template SlideInBottom inherit SlideIn
-	create Keyframe
-		time = parent.enter
-		y = 100%
+    create Keyframe
+        time = parent.enter
+        y = 100%
 
 template SlideOut inherit Animation
-	exit := 0s
-	transition_duration := 750ms
+    exit := 0s
+    transition_duration := 750ms
 
-	fill_mode = After
+    fill_mode = After
 
-	create Keyframe
-		time = parent.exit
-		x = 0
-		y = 0
+    create Keyframe
+        time = parent.exit
+        x = 0
+        y = 0
 
 template SlideOutLeft inherit SlideOut
-	create Keyframe
-		time = parent.exit + parent.transition_duration
-		x = -100%
+    create Keyframe
+        time = parent.exit + parent.transition_duration
+        x = -100%
 
 template SlideOutRight inherit SlideOut
-	create Keyframe
-		time = parent.exit + parent.transition_duration
-		x = 100%
+    create Keyframe
+        time = parent.exit + parent.transition_duration
+        x = 100%
 
 template SlideOutTop inherit SlideOut
-	create Keyframe
-		time = parent.exit + parent.transition_duration
-		y = -100%
+    create Keyframe
+        time = parent.exit + parent.transition_duration
+        y = -100%
 
 template SlideOutBottom inherit SlideOut
-	create Keyframe
-		time = parent.exit + parent.transition_duration
-		y = 100%
+    create Keyframe
+        time = parent.exit + parent.transition_duration
+        y = 100%

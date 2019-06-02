@@ -2,24 +2,24 @@
 include transitions
 
 template MySlide inherit Rectangle
-	enter := 0s
-	exit := enter + 2s
+    enter := 0s
+    exit := enter + 2s
 
-	text := "Slide"
+    text := "Slide"
 
-	fill = hsla(index / 3, 0.5, 0.5, 150)
+    fill = hsla(index / 3, 0.5, 0.5, 150)
 
-	create SlideInLeft
-		enter = parent.enter
-	create SlideOutRight
-		exit = parent.exit
+    create SlideInLeft
+        enter = parent.enter
+    create SlideOutRight
+        exit = parent.exit
 
-	create Text
-		text = parent.text
-		font = "fonts/Montserrat-Regular.ttf"
-		font_size = 48
-		x = 50%
-		y = 50%
+    create Text
+        text = parent.text
+        font = "fonts/Montserrat-Regular.ttf"
+        font_size = 48
+        x = 50%
+        y = 50%
 
 width = 400
 height = 300
@@ -29,13 +29,13 @@ background = rgb(20, 21, 24)
 frame_rate = 40
 
 create MySlide
-	text = "Slide 1"
-	enter = 1s
+    text = "Slide 1"
+    enter = 1s
 
 create MySlide
-	text = "Slide 2"
-	enter = 3s
+    text = "Slide 2"
+    enter = 3s
 
 create MySlide
-	text = "Slide 3"
-	enter = 5s
+    text = "Slide 3"
+    enter = 5s
