@@ -1,6 +1,5 @@
 
 use std::cell::RefCell;
-use std::path::Path;
 use std::fs::File;
 use std::io::Read;
 
@@ -25,15 +24,6 @@ use crate::drawing::{
     draw_filled_circle_mut,
     draw_filled_ellipse_mut,
 };
-
-py_module_initializer!(rasterizer, initrasterizer, PyInit_rasterizer, |py, m| {
-    m.add(py, "__doc__", "Rasterizer module implemented in Rust")?;
-
-    m.add_class::<PyImage>(py)?;
-    m.add_class::<PyFont>(py)?;
-
-    Ok(())
-});
 
 py_class!(pub class PyImage |py| {
     data img: RefCell<RgbaImage>;
@@ -74,7 +64,8 @@ py_class!(pub class PyImage |py| {
     def save(&self, filename: String) -> PyResult<PyObject> {
         let img = self.img(py).borrow();
 
-        img.save(&Path::new(&filename)).unwrap();
+        // TODO: Improve error handling
+        img.save(&filename).unwrap();
 
         Ok(py.None())
     }
