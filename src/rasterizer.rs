@@ -1,5 +1,6 @@
 
 use std::cell::RefCell;
+use std::io::{stdout, Write};
 use std::fs::File;
 use std::io::Read;
 
@@ -14,6 +15,7 @@ use gif::{Frame, Encoder, Repeat, SetParameter};
 
 use rusttype::{FontCollection, Font, Scale, point};
 
+use crate::ansi;
 use crate::rect::Rect;
 use crate::drawing::{
     clear,
@@ -72,6 +74,8 @@ py_class!(pub class PyImage |py| {
 
     @staticmethod
     def save_gif(filename: String, frames: Vec<PyImage>, frame_rate: u16) -> PyResult<PyObject> {
+        println!("Encoding GIF...");
+
         let first = &frames[0].img(py).borrow();
         let (w, h) = (first.width() as u16, first.height() as u16);
 
@@ -82,8 +86,18 @@ py_class!(pub class PyImage |py| {
 
         let delay = 1000 / frame_rate;
 
+        let frame_count = frames.len();
+
+        println!();
+
         for (i, frame) in (1..).zip(&frames) {
-            println!("Writing Frame {}/{}", i, frames.len());
+            ansi::move_up(1);
+            ansi::clear_line();
+
+            println!("Writing Frame {}/{} ({:.0}%)",
+                i, frame_count, (i as f32) / (frame_count as f32) * 100.0);
+
+            let _ = stdout().flush();
 
             let frame = frame.img(py).borrow();
 

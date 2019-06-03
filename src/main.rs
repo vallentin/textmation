@@ -1,4 +1,6 @@
 
+#![allow(dead_code)]
+
 use std::env;
 use std::process;
 
@@ -17,6 +19,7 @@ use cpython::{
     PyModule,
 };
 
+mod ansi;
 mod rect;
 mod drawing;
 mod rasterizer;
