@@ -91,6 +91,7 @@ def run(input_filename, output_filename, *, save_frames=False, print_ast=False, 
 			"-i", join(frames_dir, frames_basename_format),
 			"-frames", str(len(frames)),
 			"-pix_fmt", "yuv420p",
+			"-an", # Disable audio
 			output_filename,
 		])
 	else:
