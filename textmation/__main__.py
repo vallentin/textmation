@@ -90,6 +90,7 @@ def run(input_filename, output_filename, *, save_frames=False, print_ast=False, 
 			"-framerate", str(scene.p_frame_rate),
 			"-i", join(frames_dir, frames_basename_format),
 			"-frames", str(len(frames)),
+			"-pix_fmt", "yuv420p",
 			output_filename,
 		])
 	else:
