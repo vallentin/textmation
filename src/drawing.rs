@@ -168,10 +168,29 @@ pub fn draw_text_mut(image: &mut RgbaImage, top_left: (i32, i32), text: &str, fo
         .layout(text, scale, point(0.0, v_metrics.ascent))
         .collect();
 
-    let min_x = glyphs
+    if glyphs.is_empty() {
+        return;
+    }
+
+    let (min_x, min_y) = glyphs
         .first()
-        .map(|g| g.pixel_bounding_box().unwrap().min.x)
+        .map(|g| g.pixel_bounding_box().unwrap())
+        .map(|g| (g.min.x, g.min.y))
         .unwrap();
+
+    let (max_x, max_y) = glyphs
+        .last()
+        .map(|g| g.pixel_bounding_box().unwrap())
+        .map(|g| (g.max.x, g.max.y))
+        .unwrap();
+
+    let image_bounds = Rect::new(0, 0, image.width(), image.height());
+    let other_bounds = Rect::from_min_max(x + min_x, y + min_y, x + max_x, y + max_y);
+    let intersection = image_bounds.intersect(&other_bounds);
+
+    if intersection.is_empty() {
+        return;
+    }
 
     let x = x - min_x;
     let a = a as f32;

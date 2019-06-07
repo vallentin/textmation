@@ -209,6 +209,10 @@ py_class!(pub class PyFont |py| {
             .layout(text, scale, point(0.0, v_metrics.ascent))
             .collect();
 
+        if glyphs.is_empty() {
+            return Ok((0, 0));
+        }
+
         let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
 
         let glyphs_width = {
