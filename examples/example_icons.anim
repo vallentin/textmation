@@ -1,0 +1,54 @@
+
+include icons
+
+width = 400
+height = 200
+background = rgb(255, 255, 255)
+
+create GitHubIcon
+    font_size = 72
+    fill = rgb(35, 35, 35)
+    x = 14%
+    y = 25%
+
+create StackOverflowIcon
+    font_size = 72
+    fill = rgb(254, 122, 22)
+    x = 38%
+    y = 25%
+
+create RedditIcon
+    font_size = 72
+    fill = rgb(255, 69, 0)
+    x = 62%
+    y = 25%
+
+create TwitterIcon
+    font_size = 72
+    fill = rgb(29, 161, 242)
+    x = 86%
+    y = 25%
+
+create GoogleIcon
+    font_size = 72
+    fill = rgb(66, 133, 244)
+    x = 14%
+    y = 75%
+
+create YouTubeIcon
+    font_size = 72
+    fill = rgb(255, 0, 0)
+    x = 38%
+    y = 75%
+
+create FacebookIcon
+    font_size = 72
+    fill = rgb(59, 89, 152)
+    x = 62%
+    y = 75%
+
+create FacebookMessengerIcon
+    font_size = 72
+    fill = rgb(24, 119, 242)
+    x = 86%
+    y = 75%
