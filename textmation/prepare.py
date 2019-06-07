@@ -53,8 +53,21 @@ def _download_images(scene):
 
 
 def _download_font(url):
-	if "fonts.google.com" in url:
-		font_name = re.search(r"\/([\w+]+)$", url)
+	if url.endswith(".ttf"):
+		font_name = re.search(r"\/([\w+\-\.]+)$", url)
+		assert font_name is not None
+		font_name = font_name.group(1)
+
+		filename = join(_fonts_dir, font_name)
+
+		print("Downloading:", url, "->", relpath(filename), flush=True)
+
+		os.makedirs(_fonts_dir, exist_ok=True)
+		download(url, filename)
+
+		print("Downloaded:", url, "->", relpath(filename), flush=True)
+	elif "fonts.google.com" in url:
+		font_name = re.search(r"\/([\w+\-\.]+)$", url)
 		assert font_name is not None
 		font_name = font_name.group(1)
 
@@ -83,9 +96,14 @@ def _download_font(url):
 
 
 def _download_fonts(scene):
-	default_font = join(_fonts_dir, "Montserrat-Regular.ttf")
-	if not exists(default_font):
-		_download_font("https://fonts.google.com/specimen/Montserrat")
+	default_fonts = [
+		(join(_fonts_dir, "Montserrat-Regular.ttf"), "https://fonts.google.com/specimen/Montserrat"),
+		(join(_fonts_dir, "fa-brands-400.ttf"), "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/webfonts/fa-brands-400.ttf"),
+	]
+
+	for filename, url in default_fonts:
+		if not exists(filename):
+			_download_font(url)
 
 
 def prepare(scene):
