@@ -1,0 +1,29 @@
+
+# Icons: https://fontawesome.com/icons?d=gallery&s=brands
+
+template FontAwesome inherit Text
+	font = "fonts/fa-brands-400.ttf"
+
+template GitHubIcon inherit FontAwesome
+	text = "\uf09b"
+
+template StackOverflowIcon inherit FontAwesome
+	text = "\uf16c"
+
+template RedditIcon inherit FontAwesome
+	text = "\uf1a1"
+
+template TwitterIcon inherit FontAwesome
+	text = "\uf099"
+
+template GoogleIcon inherit FontAwesome
+	text = "\uf1a0"
+
+template YouTubeIcon inherit FontAwesome
+	text = "\uf167"
+
+template FacebookIcon inherit FontAwesome
+	text = "\uf09a"
+
+template FacebookMessengerIcon inherit FontAwesome
+	text = "\uf39f"
